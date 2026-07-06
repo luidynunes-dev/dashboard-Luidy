@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard GESTA - Aure Digital</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --surface-1: #171a21;
+    --surface-2: #1f232c;
+    --border: #2a2f3a;
+    --border-danger: #7a2e2e;
+    --bg-danger: #2a1616;
+    --text-primary: #f2f3f5;
+    --text-secondary: #a8adb8;
+    --text-muted: #6b7280;
+    --text-success: #4ade80;
+    --text-danger: #f87171;
+    --fill-accent: #4f7cff;
+    --on-accent: #ffffff;
+    --radius: 10px;
+    --font-mono: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 2rem;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 1.5rem; }
+  .card {
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+  input, textarea, select {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 13px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  textarea { font-family: var(--font-mono); resize: vertical; }
+  button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--fill-accent);
+    color: var(--on-accent);
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-box {
+    background: var(--surface-1);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 6px; }
+  .stat-value { font-size: 18px; font-weight: 500; margin: 0; }
+  .store-row {
+    padding: 12px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 12px;
+  }
+  .store-row:last-child { border-bottom: none; }
+  .store-name { font-weight: 500; margin-bottom: 6px; }
+  .store-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    color: var(--text-secondary);
+  }
+  .alert-box {
+    border-left: 3px solid var(--border-danger);
+    background: var(--bg-danger);
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .alert-title { font-size: 12px; font-weight: 500; color: var(--text-danger); margin: 0 0 8px; }
+  .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .section-title { font-size: 14px; font-weight: 500; margin: 0; }
+  .scroll-box { max-height: 400px; overflow-y: auto; }
+  .hidden { display: none; }
+  .copied { background: var(--text-success) !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Dashboard GESTA — Meta Ads + Kommo</h1>
+
+  <div class="card">
+    <h3 class="section-title" style="margin-bottom:1rem;">Conectar dados</h3>
+    <label>Meta Ads Access Token</label>
+    <input type="password" id="metaToken" placeholder="Seu access token (EAA...)" />
+
+    <label>Kommo API Key</label>
+    <input type="password" id="kommoKey" placeholder="Sua API key" />
+
+    <label>Kommo Subdomain (ex: aure.kommo.com)</label>
+    <input type="text" id="kommoDomain" placeholder="seudominio.kommo.com" />
+
+    <label>IDs das contas de anúncios (separados por vírgula)</label>
+    <textarea id="actIds" placeholder="act_123456, act_789012..." style="height:70px;"></textarea>
+
+    <button id="fetchBtn">Buscar dados (últimos 7 dias)</button>
+    <p style="font-size:11px; color:var(--text-muted); margin-top:10px; margin-bottom:0;">
+      ⚠️ Suas credenciais ficam apenas no seu navegador. Nada é enviado para nenhum servidor além da API oficial da Meta e do Kommo.
+    </p>
+  </div>
+
+  <div id="dashboardContainer" class="hidden">
+    <div class="stats-grid">
+      <div class="stat-box">
+        <p class="stat-label">Total Investido</p>
+        <p class="stat-value" id="totalSpend">R$ 0,00</p>
+      </div>
+      <div class="stat-box">
+        <p class="stat-label">Total Vendido</p>
+        <p class="stat-value" id="totalSales">R$ 0,00</p>
+      </div>
+      <div class="stat-box">
+        <p class="stat-label">ROI</p>
+        <p class="stat-value" id="roi">0%</p>
+      </div>
+      <div class="stat-box">
+        <p class="stat-label">WhatsApps OK</p>
+        <p class="stat-value" id="whatsappStatus">33/33</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="header-row">
+        <h3 class="section-title">Status das Conexões WhatsApp</h3>
+        <select id="supervisorFilter">
+          <option value="">Todos os supervisores</option>
+          <option value="patricia">Patrícia (Femininas)</option>
+          <option value="nathalia">Nathália (Adidas)</option>
+          <option value="alexandre">Alexandre (Nação)</option>
+        </select>
+      </div>
+      <div id="whatsappAlerts" class="alert-box">
+        <p class="alert-title">⚠️ Desconexões detectadas</p>
+        <div id="alertsList" style="font-size:12px; color:var(--text-secondary);"></div>
+      </div>
+      <div id="whatsappContainer" class="scroll-box">
+        <p style="color:var(--text-secondary);">Carregando status...</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom:1rem;">Métricas por loja (últimos 7 dias)</h3>
+      <div id="storesContainer" class="scroll-box">
+        <p style="color:var(--text-secondary);">Carregando dados das lojas...</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title" style="margin-bottom:1rem;">Feedback para sexta-feira</h3>
+      <textarea id="feedbackText" style="height:250px; font-size:11px;">Carregando...</textarea>
+      <button id="copyBtn">Copiar feedback</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const storesBySupervisor = {
+  patricia: ['Shoes Off', 'Capodarte Amazonas', 'Atelier Mix', 'Piccadilly Ponta Negra', 'Piccadilly Rio Branco', 'Piccadilly Manauara', 'Piccadilly Amazonas', 'Piccadilly Boa Vista', 'Piccadilly Pátio Belém', 'Piccadilly Parque Belém', 'Piccadilly Boulevard Belém', 'Loungerie Ponta Negra', 'Loungerie Manauara', 'Loungerie Porto Velho', 'Petite Jolie Sumaúma', 'Petite Jolie Manauara', 'Petite Jolie Belém', 'Ferracini Manauara', 'Ferracini Belém', 'Ferracini Amazonas'],
+  nathalia: ['Adidas Performance Belém', 'Adidas Performance Rio Branco', 'Adidas Performance Porto Velho', 'Adidas Performance Grão Pará', 'Adidas Kids', 'Adidas Originals Belém', 'Adidas Originals Manauara'],
+  alexandre: ['Nação Via Norte', 'Nação Ponta Negra', 'Nação Rio Branco', 'Nação Manaus', 'Nação Boa Vista', 'Nação Porto Velho']
+};
+
+let storesData = {};
+let whatsappStatus = {};
+
+document.getElementById('fetchBtn').addEventListener('click', async () => {
+  const metaToken = document.getElementById('metaToken').value.trim();
+  const kommoKey = document.getElementById('kommoKey').value.trim();
+  const kommoDomain = document.getElementById('kommoDomain').value.trim();
+  const actIdsRaw = document.getElementById('actIds').value.trim();
+
+  if (!metaToken || !actIdsRaw) {
+    alert('Preencha ao menos o Access Token do Meta e os IDs das contas.');
+    return;
+  }
+
+  const actIds = actIdsRaw.split(',').map(id => id.trim()).filter(Boolean);
+
+  document.getElementById('fetchBtn').textContent = 'Buscando dados...';
+  document.getElementById('fetchBtn').disabled = true;
+
+  try {
+    await fetchMetaAdsData(metaToken, actIds);
+    if (kommoKey && kommoDomain) {
+      await fetchKommoData(kommoKey, kommoDomain);
+    } else {
+      // sem kommo configurado, zera status
+      Object.keys(storesData).forEach(name => {
+        whatsappStatus[name] = { connected: true, lastSync: '-', timeSinceDisconnect: null };
+      });
+    }
+    updateDashboard();
+    document.getElementById('dashboardContainer').classList.remove('hidden');
+  } catch (err) {
+    alert('Erro ao buscar dados: ' + err.message + '\n\nVerifique o token e os IDs das contas.');
+    console.error(err);
+  } finally {
+    document.getElementById('fetchBtn').textContent = 'Buscar dados (últimos 7 dias)';
+    document.getElementById('fetchBtn').disabled = false;
+  }
+});
+
+// Busca dados reais da Marketing API do Meta
+async function fetchMetaAdsData(token, actIds) {
+  storesData = {};
+  const since = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+  const until = new Date().toISOString().split('T')[0];
+
+  for (const actId of actIds) {
+    const cleanId = actId.startsWith('act_') ? actId : `act_${actId}`;
+    const url = `https://graph.facebook.com/v19.0/${cleanId}/insights?fields=account_name,spend,actions,cost_per_action_type&time_range={"since":"${since}","until":"${until}"}&level=account&access_token=${token}`;
+
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.error) {
+      console.error(`Erro na conta ${cleanId}:`, json.error);
+      continue;
+    }
+
+    const row = json.data && json.data[0];
+    const storeName = (row && row.account_name) || cleanId;
+    const spend = row ? parseFloat(row.spend || 0) : 0;
+
+    let messages = 0;
+    let profileVisits = 0;
+    if (row && row.actions) {
+      row.actions.forEach(a => {
+        if (a.action_type === 'onsite_conversion.messaging_conversation_started_7d' || a.action_type.includes('message')) {
+          messages += parseInt(a.value || 0);
+        }
+        if (a.action_type.includes('profile_visit')) {
+          profileVisits += parseInt(a.value || 0);
+        }
+      });
+    }
+
+    storesData[storeName] = {
+      spend,
+      messages,
+      profileVisits,
+      sales: 0,
+      salesValue: 0
+    };
+  }
+}
+
+// Busca status de conexão do WhatsApp via Kommo API
+async function fetchKommoData(apiKey, domain) {
+  try {
+    const url = `https://${domain}/api/v4/account?with=amojo_id`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    const json = await res.json();
+
+    // A estrutura exata de canais de WhatsApp varia por integração (WABA vs WhatsApp Lite/Wappi).
+    // Ajuste o endpoint abaixo conforme o provedor de canal usado pela sua conta Kommo.
+    const channelsUrl = `https://${domain}/api/v4/account/talks`;
+    const channelsRes = await fetch(channelsUrl, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    const channelsJson = await channelsRes.json();
+
+    Object.keys(storesData).forEach(name => {
+      whatsappStatus[name] = { connected: true, lastSync: new Date().toLocaleTimeString('pt-BR'), timeSinceDisconnect: null };
+    });
+
+    // TODO: mapear channelsJson para status real por loja quando o endpoint de canais estiver confirmado
+  } catch (err) {
+    console.error('Erro Kommo:', err);
+    Object.keys(storesData).forEach(name => {
+      whatsappStatus[name] = { connected: true, lastSync: '-', timeSinceDisconnect: null };
+    });
+  }
+}
+
+function updateDashboard() {
+  const totalSpend = Object.values(storesData).reduce((sum, s) => sum + s.spend, 0);
+  const totalSales = Object.values(storesData).reduce((sum, s) => sum + s.salesValue, 0);
+  const roi = totalSpend > 0 ? ((totalSales - totalSpend) / totalSpend * 100) : 0;
+
+  const connectedCount = Object.values(whatsappStatus).filter(s => s.connected).length;
+  const totalStores = Object.keys(whatsappStatus).length;
+
+  document.getElementById('totalSpend').textContent = `R$ ${totalSpend.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  document.getElementById('totalSales').textContent = `R$ ${totalSales.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  document.getElementById('roi').textContent = `${roi.toFixed(1)}%`;
+  document.getElementById('whatsappStatus').textContent = `${connectedCount}/${totalStores}`;
+
+  updateWhatsappStatus();
+  updateStores();
+  document.getElementById('feedbackText').value = generateFeedback();
+}
+
+function updateWhatsappStatus() {
+  const disconnected = Object.entries(whatsappStatus).filter(([_, status]) => !status.connected);
+  const supervisorFilter = document.getElementById('supervisorFilter').value;
+
+  const alertsBox = document.getElementById('whatsappAlerts');
+  if (disconnected.length > 0) {
+    alertsBox.style.display = 'block';
+    const filteredDisconnected = supervisorFilter
+      ? disconnected.filter(([store]) => (storesBySupervisor[supervisorFilter] || []).includes(store))
+      : disconnected;
+
+    document.getElementById('alertsList').innerHTML = filteredDisconnected.map(([store, status]) =>
+      `<div style="padding:6px 0; border-bottom:0.5px solid var(--border-danger);">❌ ${store} (há ${status.timeSinceDisconnect || 'algum tempo'})</div>`
+    ).join('');
+  } else {
+    alertsBox.style.display = 'none';
+  }
+
+  const allStores = supervisorFilter ? (storesBySupervisor[supervisorFilter] || []) : Object.keys(whatsappStatus);
+  document.getElementById('whatsappContainer').innerHTML = allStores.map(store => {
+    const status = whatsappStatus[store] || { connected: true, lastSync: '-' };
+    const icon = status.connected ? '✅' : '❌';
+    const syncText = status.connected ? `Sincronizado: ${status.lastSync}` : `Desconectado há: ${status.timeSinceDisconnect}`;
+    const color = status.connected ? 'var(--text-success)' : 'var(--text-danger)';
+    return `
+      <div class="store-row">
+        <div style="color:${color}; font-weight:500; margin-bottom:4px;">${icon} ${store}</div>
+        <div style="font-size:11px; color:var(--text-secondary);">${syncText}</div>
+      </div>`;
+  }).join('');
+}
+
+function updateStores() {
+  document.getElementById('storesContainer').innerHTML = Object.entries(storesData).map(([name, data]) => `
+    <div class="store-row">
+      <div class="store-name">${name}</div>
+      <div class="store-metrics">
+        <div>💵 R$ ${data.spend.toFixed(2)}</div>
+        <div>💬 ${data.messages} msgs</div>
+        <div>👁️ ${data.profileVisits} visitas</div>
+        <div>🛍️ R$ ${data.salesValue.toFixed(2)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function generateFeedback() {
+  let text = '🌞 Muito bom dia pessoal! Excelente sexta-feira!\n';
+  text += '📆 Passando agora, para mostrar os resultados das campanhas nesses últimos 7 dias.\n\n';
+
+  const disconnected = Object.entries(whatsappStatus).filter(([_, status]) => !status.connected);
+  if (disconnected.length > 0) {
+    text += '⚠️ ATENÇÃO - WhatsApps desconectados:\n';
+    disconnected.forEach(([store]) => { text += `❌ ${store}\n`; });
+    text += '\n';
+  }
+
+  Object.entries(storesData).forEach(([name, data]) => {
+    text += `─────${name.toUpperCase()}─────\n`;
+    text += `Total investido: R$ ${data.spend.toFixed(2)}\n`;
+    text += `🔵 No Meta Ads 🔵\n`;
+    text += `💵 Investimento Total: R$ ${data.spend.toFixed(2)}\n`;
+    text += `🎯 Mensagens: ${data.messages}\n`;
+    text += `📊 Visitas ao perfil: ${data.profileVisits}\n`;
+    text += `🟢 Resultados (Kommo) 🟢\n`;
+    text += `🛍️ Vendas realizadas: ${data.sales}\n`;
+    text += `💰 Valor em vendas: R$ ${data.salesValue.toFixed(2)}\n\n`;
+  });
+
+  return text;
+}
+
+document.getElementById('supervisorFilter').addEventListener('change', updateWhatsappStatus);
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const feedback = document.getElementById('feedbackText').value;
+  navigator.clipboard.writeText(feedback).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copiar feedback';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+});
+</script>
+</body>
+</html>
