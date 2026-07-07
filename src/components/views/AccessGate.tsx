@@ -13,43 +13,18 @@ export const ACCESS_CONFIG: Record<string, {
   isStaff: boolean;
   nome: string;
 }> = {
-  // ── Você (acesso total + IA + saudação) ──────────────────────────────────
-  'guilherme1202': {
+  // ── Luidy e Gabryel (acesso total + IA + saudação) ────────────────────────
+  'luidygabryel': {
     groupIds: 'all',
     isMaster: true,
     isStaff:  false,
-    nome:     'Guilherme',
-  },
-
-  // ── Gestores de tráfego (acesso total + saudação, sem IA) ─────────────────
-  'elisson2026': {
-    groupIds: 'all',
-    isMaster: false,
-    isStaff:  true,
-    nome:     'Elisson',
-  },
-  'guilhermegomes2026': {
-    groupIds: 'all',
-    isMaster: false,
-    isStaff:  true,
-    nome:     'Guilherme Gomes',
-  },
-
-  // ── Colaboradores Aure (todos os grupos, sem IA, sem saudação) ────────────
-  'aure2026': {
-    groupIds: 'all',
-    isMaster: false,
-    isStaff:  true,
-    nome:     '',
+    nome:     'Luidy',
   },
 
   // ── Clientes (só o grupo deles, sem IA, sem saudação) ────────────────────
-  // Para gestor com múltiplos grupos: groupIds: ['yamcol', 'barbosa']
-  'yamcol2026':    { groupIds: ['yamcol'],    isMaster: false, isStaff: false, nome: '' },
-  'barbosa2026':   { groupIds: ['barbosa'],   isMaster: false, isStaff: false, nome: '' },
-  'paralelas2026': { groupIds: ['paralelas'], isMaster: false, isStaff: false, nome: '' },
-  'lupo2026':      { groupIds: ['lupo'],      isMaster: false, isStaff: false, nome: '' },
-  'ferracini2026': { groupIds: ['ferracini'], isMaster: false, isStaff: false, nome: '' },
+  // Para gestor com múltiplos grupos: groupIds: ['gesta', 'avulsos']
+  'gesta2026':   { groupIds: ['gesta'],   isMaster: false, isStaff: false, nome: '' },
+  'avulsos2026': { groupIds: ['avulsos'], isMaster: false, isStaff: false, nome: '' },
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
