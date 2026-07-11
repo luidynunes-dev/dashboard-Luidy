@@ -116,10 +116,17 @@ function fmtNumber(n: number): string {
   return n.toLocaleString('pt-BR');
 }
 
+function fmtDate(iso: string): string {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
 function buildMessage(name: string, data: FeedbackData, sales: KommoSales | null): string {
   const lines: string[] = [
     `Muito bom dia pessoal! Excelente sexta-feira.😁`,
     `📆 Passando agora, para mostrar os resultados das campanhas nesses últimos 7 dias.`,
+    `(${fmtDate(data.dateStart)} a ${fmtDate(data.dateStop)})`,
     ``,
     `─────${name}─────`,
     ``,
