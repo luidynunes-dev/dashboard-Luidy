@@ -5,70 +5,65 @@ import { getAccountFeedbackData, FeedbackData } from '../../services/metaService
 
 // Nome de exibição para cada chave do META_ACCOUNTS
 const DISPLAY_NAMES: Record<string, string> = {
-  // Yamcol
-  'stanley':        'Stanley Boulevard',
-  'tommy':          'Tommy Hilfiger',
-  'milon':          'Milon Boulevard',
-  'taco':           'Taco Boulevard',
-  'vh-boulevard':   'Victor Hugo Boulevard',
-  'vh-bosque':      'Victor Hugo Bosque',
-  'vh-fortaleza':   'Victor Hugo Fortaleza',
-  'vh-ribeirao':    'Victor Hugo Ribeirão Preto',
-  'vh-manauara':    'Victor Hugo Manauara',
-  'osklen-manaus':  'Osklen Manaus',
-  'osklen-pvh':     'Osklen Porto Velho',
-  'plie':           'Plié Boulevard',
-  // Barbosa
-  'barbosa-calcados': 'Barbosa Calçados',
-  'arezzo':           'Arezzo GV',
-  'sirigaita':        'Sirigaita Calçados',
-  'zoom':             'Zoom Calçados',
-  'flags':            'Flags Calçados',
-  // Paralelas
-  'paralelas-dom-luis':   'Paralelas Dom Luís',
-  'paralelas-monumental': 'Paralelas Monumental',
-  'paralelas-reserva':    'Paralelas Reserva',
-  // Ferracini
-  'ferracini-americana':    'Ferracini Americana',
-  'ferracini-valinhos':     'Ferracini Valinhos',
-  'ferracini-piracicaba':   'Ferracini Piracicaba',
-  'ferracini-villa-romana': 'Ferracini Florianópolis',
-  // Lupo
-  'lupo-boa-vista':   'Lupo Boa Vista',
-  'lupo-carrefour':   'Lupo Carrefour',
-  'lupo-manauara':    'Lupo Manauara',
-  'lupo-ponta-negra': 'Lupo Ponta Negra',
-  'lupo-sao-caetano': 'Lupo São Caetano',
-  'lupo-sports':      'Lupo Sport',
-  'lupo-sumauma':     'Lupo Sumaúma',
-  // Avulsos
-  'amo-outlet':          'Amo Outlet',
-  'anjo-colours':        'Anjo Colours',
-  'b201':                'B 201 Calçados',
-  'carrano':             'Carrano',
-  'democrata-rio-verde': 'Democrata Rio Verde',
-  'guapa':               'Guapa',
-  'kipasso':             'Kipasso Calçados',
-  'mega-calcados':       'Mega Calçados',
-  'sergios':             "Sergio's",
+  // Adidas (Nathália)
+  'adidas-performance-porto-velho': 'Adidas Performance Porto Velho',
+  'adidas-performance-rio-branco':  'Adidas Performance Rio Branco',
+  'adidas-performance-grao-para':   'Adidas Performance Grão Pará',
+  'adidas-performance-belem':       'Adidas Performance Belém',
+  'adidas-kids':                    'Adidas Kids',
+  'adidas-originals-belem':         'Adidas Originals Belém',
+  'adidas-originals-manauara':      'Adidas Originals Manauara',
+  // Nação (Alexandre)
+  'nacao-via-norte':   'Nação Via Norte',
+  'nacao-ponta-negra': 'Nação Ponta Negra',
+  'nacao-rio-branco':  'Nação Rio Branco',
+  'nacao-manaus':      'Nação Manaus',
+  'nacao-boa-vista':   'Nação Boa Vista',
+  'nacao-porto-velho': 'Nação Porto Velho',
+  // Femininas (Patrícia)
+  'shoes-off':          'Shoes Off',
+  'capodarte-amazonas': 'Capodarte Amazonas',
+  'atelier-mix':        'Atelier Mix',
+  'piccadilly-ponta-negra':     'Piccadilly Ponta Negra',
+  'piccadilly-rio-branco':      'Piccadilly Rio Branco',
+  'piccadilly-manauara':        'Piccadilly Manauara',
+  'piccadilly-amazonas':        'Piccadilly Amazonas',
+  'piccadilly-boa-vista':       'Piccadilly Boa Vista',
+  'piccadilly-patio-belem':     'Piccadilly Pátio Belém',
+  'piccadilly-parque-belem':    'Piccadilly Parque Shopping Belém',
+  'piccadilly-boulevard-belem': 'Piccadilly Boulevard Belém',
+  'loungerie-ponta-negra': 'Loungerie Ponta Negra',
+  'loungerie-manauara':    'Loungerie Manauara',
+  'loungerie-porto-velho': 'Loungerie Porto Velho',
+  'petite-jolie-sumauma':  'Petite Jolie Sumaúma',
+  'petite-jolie-manauara': 'Petite Jolie Manauara',
+  'petite-jolie-belem':    'Petite Jolie Belém',
+  'ferracini-manauara-gesta': 'Ferracini Manauara',
+  'ferracini-belem-gesta':    'Ferracini Belém',
+  'ferracini-amazonas-gesta': 'Ferracini Amazonas',
+  // Clientes Avulsos
+  'usaflex-araxa':       'Usaflex Araxá',
+  'via-orlandia':        'Via Orlândia',
+  'brothers-shoes':      'Brothers Shoes',
+  'usaflex-patos-minas': 'Usaflex Patos de Minas',
+  'fetiche-love-shop':   'Fetiche Love Shop',
+  'swarovski-maringa':   'Swarovski Maringá',
+  'swarovski-curitiba':  'Swarovski Curitiba',
+  'usaflex-savassi':     'Usaflex Savassi',
+  're-calcados':         'Rê Calçados',
+  'santa-lolla':         'Santa Lolla',
+  'usaflex-cascavel':    'Usaflex Cascavel',
 };
 
-// Contas com múltiplas lojas: cada loja filtra por keyword no nome de campanha
-// Padrão dos clientes: [PONTA NEGRA], [SUMAUMA], [MANAUARA], [BOSQUE], [BOULEVARD]
-const MULTI_STORE_GROUPS = [
+// Contas compartilhadas por mais de uma loja: cada loja filtra por keyword no nome de campanha.
+// Ferracini Manauara e Amazonas usam o mesmo Act ID — ajuste os nameFilter abaixo
+// para baterem com o padrão real usado nos nomes das campanhas dessas duas lojas.
+const MULTI_STORE_GROUPS: { accountId: string; stores: { key: string; name: string; nameFilter: string }[] }[] = [
   {
-    accountId: META_ACCOUNTS['lupo-manauara'], // act_1908312336258416
+    accountId: META_ACCOUNTS['ferracini-manauara-gesta'],
     stores: [
-      { key: 'lupo-manauara',    name: 'Lupo Manauara',    nameFilter: 'MANAUARA'    },
-      { key: 'lupo-ponta-negra', name: 'Lupo Ponta Negra', nameFilter: 'PONTA NEGRA' },
-      { key: 'lupo-sumauma',     name: 'Lupo Sumaúma',     nameFilter: 'SUMAUMA'     },
-    ],
-  },
-  {
-    accountId: META_ACCOUNTS['vh-boulevard'], // act_739663585617111
-    stores: [
-      { key: 'vh-boulevard', name: 'Victor Hugo Boulevard', nameFilter: 'BOULEVARD' },
-      { key: 'vh-bosque',    name: 'Victor Hugo Bosque',    nameFilter: 'BOSQUE'    },
+      { key: 'ferracini-manauara-gesta', name: 'Ferracini Manauara', nameFilter: 'MANAUARA' },
+      { key: 'ferracini-amazonas-gesta', name: 'Ferracini Amazonas', nameFilter: 'AMAZONAS' },
     ],
   },
 ];
@@ -116,42 +111,50 @@ function fmtBRL(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function fmtDate(iso: string): string {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-
 function fmtNumber(n: number): string {
   return n.toLocaleString('pt-BR');
 }
 
 function buildMessage(name: string, data: FeedbackData): string {
-  const dateRange = `(${fmtDate(data.dateStart)} a ${fmtDate(data.dateStop)})`;
   const lines: string[] = [
-    `Olá pessoal! Excelente sexta-feira para todos!🚀`,
-    `📆 Passando para mostrar os investimentos e resultados desses últimos 7 dias.`,
-    dateRange,
-    `🔵No Meta🔵`,
-    `Total Investido: R$ ${fmtBRL(data.totalSpend)}`,
+    `Muito bom dia pessoal! Excelente sexta-feira.😁`,
+    `📆 Passando agora, para mostrar os resultados das campanhas nesses últimos 7 dias.`,
+    ``,
+    `─────${name}─────`,
+    ``,
+    `Total investido: R$ ${fmtBRL(data.totalSpend)}`,
+    ``,
+    `🔵 No Meta Ads 🔵`,
   ];
 
-  if (data.mensagem) {
-    lines.push(`💵Investimento Mensagem: R$ ${fmtBRL(data.mensagem.spend)}`);
-    lines.push(`🎯 Mensagens: ${fmtNumber(data.mensagem.mensagens)}`);
-    lines.push(`💲Custo por mensagem: R$ ${fmtBRL(data.mensagem.custoMensagem)}`);
-  }
-
-  if (data.secundaria) {
-    const sec = data.secundaria;
-    if (sec.tipo === 'impulsionamento') {
-      lines.push(`💵Investimento Impulsionamento: R$ ${fmtBRL(sec.spend)}`);
-      lines.push(`👀Visitas ao Perfil: ${fmtNumber(sec.visitasPerfil)}`);
-      lines.push(`💲Custo por Visita: R$ ${fmtBRL(sec.custoVisita)}`);
+  for (const c of data.campaigns) {
+    if (c.tipo === 'mensagem') {
+      lines.push(`📣 Campanha de mensagem`);
+      lines.push(`Nome da campanha: ${c.name}`);
+      lines.push(`💵 Investimento Mensagem: R$ ${fmtBRL(c.spend)}`);
+      lines.push(`🎯 Mensagens: ${fmtNumber(c.mensagens ?? 0)}`);
+      lines.push(`💲 Custo por mensagem: R$ ${fmtBRL(c.custoMensagem ?? 0)}`);
+      lines.push(``);
+    } else if (c.tipo === 'seguidores') {
+      lines.push(`📣 Campanha de seguidores`);
+      lines.push(`Nome da campanha: ${c.name}`);
+      lines.push(`💵 Investimento Seguidores: R$ ${fmtBRL(c.spend)}`);
+      lines.push(`🎯 Visitas ao perfil: ${fmtNumber(c.visitasPerfil ?? 0)}`);
+      lines.push(`💲 Custo por visita: R$ ${fmtBRL(c.custoVisita ?? 0)}`);
+      lines.push(``);
     } else {
-      lines.push(`💵Investimento Reconhecimento: R$ ${fmtBRL(sec.spend)}`);
-      lines.push(`👀Pessoas Alcançadas: ${fmtNumber(sec.pessoasAlcancadas)}`);
+      lines.push(`📣 Campanha`);
+      lines.push(`Nome da campanha: ${c.name}`);
+      lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
+      lines.push(``);
     }
   }
+
+  // TODO: integrar com a API do Kommo para puxar vendas reais dos últimos 7 dias.
+  // Por enquanto, esses campos ficam para preenchimento manual.
+  lines.push(`🟢 Resultados (Kommo) 🟢`);
+  lines.push(`🛍️ Vendas realizadas: —`);
+  lines.push(`💰 Valor em vendas: R$ —`);
 
   return lines.join('\n');
 }
