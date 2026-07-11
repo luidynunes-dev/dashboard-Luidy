@@ -6,8 +6,11 @@ export interface KommoSales {
   valorVendas: number;
 }
 
-export async function getStoreSales(storeId: string, days = 7): Promise<KommoSales | null> {
-  const res = await fetch(`/api/kommo?storeId=${encodeURIComponent(storeId)}&action=sales&days=${days}`);
+export async function getStoreSales(storeId: string, since?: string, until?: string): Promise<KommoSales | null> {
+  const params = new URLSearchParams({ storeId, action: 'sales' });
+  if (since) params.set('since', since);
+  if (until) params.set('until', until);
+  const res = await fetch(`/api/kommo?${params.toString()}`);
   const json = await res.json();
   if (!res.ok) throw new Error(json.error ?? 'Erro ao buscar vendas no Kommo');
   return json;
