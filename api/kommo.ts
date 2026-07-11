@@ -35,10 +35,8 @@ async function kommoFetch(subdomain: string, token: string, path: string) {
   return res.json();
 }
 
-// Vendas fechadas nos últimos N dias (padrão: 7)
-async function getSales(account: KommoAccount, days: number) {
-  const to   = Math.floor(Date.now() / 1000);
-  const from = to - days * 86400;
+// Vendas fechadas no período informado (timestamps Unix, em segundos)
+async function getSales(account: KommoAccount, from: number, to: number) {
   const wonStatusId = account.wonStatusId ?? 142; // 142 = status padrão "Venda ganha" no Kommo
 
   const json = await kommoFetch(
@@ -58,7 +56,12 @@ export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const storeId = url.searchParams.get('storeId');
   const action  = url.searchParams.get('action') ?? 'sales';
-  const days    = parseInt(url.searchParams.get('days') ?? '7', 10);
+  // since/until no formato 'YYYY-MM-DD'. Se não vierem, usa os últimos 7 dias.
+  const sinceParam = url.searchParams.get('since');
+  const untilParam = url.searchParams.get('until');
+
+  const to   = untilParam ? Math.floor(new Date(`${untilParam}T23:59:59Z`).getTime() / 1000) : Math.floor(Date.now() / 1000);
+  const from = sinceParam ? Math.floor(new Date(`${sinceParam}T00:00:00Z`).getTime() / 1000) : to - 7 * 86400;
 
   if (!storeId) {
     return new Response(JSON.stringify({ error: 'storeId é obrigatório' }), { status: 400 });
@@ -72,7 +75,7 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     if (action === 'sales') {
-      const data = await getSales(account, days);
+      const data = await getSales(account, from, to);
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
