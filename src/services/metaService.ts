@@ -109,32 +109,26 @@ export async function getCampaigns(
   });
 }
 
-// ─── Feedback semanal ────────────────────────────────────────────────────────
+// ─── Feedback semanal (por campanha individual) ─────────────────────────────
+
+export interface CampaignFeedback {
+  tipo: 'mensagem' | 'seguidores' | 'outro';
+  name: string;
+  spend: number;
+  mensagens?: number;
+  custoMensagem?: number;
+  visitasPerfil?: number;
+  custoVisita?: number;
+}
 
 export interface FeedbackData {
   dateStart: string;
   dateStop:  string;
   totalSpend: number;
-  mensagem: {
-    spend:        number;
-    mensagens:    number;
-    custoMensagem: number;
-  } | null;
-  secundaria: {
-    tipo:              'impulsionamento' | 'reconhecimento';
-    spend:             number;
-    visitasPerfil:     number;
-    custoVisita:       number;
-    pessoasAlcancadas: number;
-  } | null;
+  campaigns: CampaignFeedback[];
 }
 
-// Objetivos que indicam campanha de reconhecimento/alcance (formato antigo e novo da Meta)
-const RECONHECIMENTO_OBJ = new Set([
-  'REACH', 'BRAND_AWARENESS', 'OUTCOME_AWARENESS',
-]);
-
-// nameFilter: keyword do nome da campanha (ex: 'PONTA NEGRA') — usado em contas multi-loja
+// nameFilter: keyword do nome da campanha (ex: 'MANAUARA') — usado em contas compartilhadas por mais de uma loja
 export async function getAccountFeedbackData(
   adAccountId: string,
   nameFilter?: string,
@@ -146,7 +140,7 @@ export async function getAccountFeedbackData(
 
   let candidates: any[] = json.data ?? [];
 
-  // Em contas com múltiplas lojas, filtra apenas campanhas desta loja
+  // Em contas compartilhadas por mais de uma loja, filtra apenas campanhas desta loja
   if (nameFilter) {
     const kw = nameFilter.toUpperCase();
     candidates = candidates.filter((c: any) => (c.name ?? '').toUpperCase().includes(kw));
@@ -162,68 +156,49 @@ export async function getAccountFeedbackData(
   const dateStart = firstIns?.date_start ?? '';
   const dateStop  = firstIns?.date_stop  ?? '';
 
-  let totalSpend      = 0;
-  let mensagemSpend   = 0;
-  let totalMensagens  = 0;
-  let secundariaSpend = 0;
-  let totalVisitas    = 0;
-  let totalReach      = 0;
-  let tipoSecundaria: 'impulsionamento' | 'reconhecimento' | null = null;
+  let totalSpend = 0;
+  const campaigns: CampaignFeedback[] = [];
 
   for (const c of active) {
     const ins      = c.insights?.data?.[0];
     const spend    = parseFloat(ins?.spend ?? '0');
     const mensagens = action(ins?.actions, 'onsite_conversion.messaging_conversation_started_7d');
-    const obj       = (c.objective ?? '').toUpperCase();
     const nameLower = (c.name ?? '').toLowerCase();
 
-    // Visitas ao Perfil: tenta tipos de ação específicos, usa clicks como fallback
     const visitasPerfil =
       action(ins?.actions, 'visit_instagram_profile') ||
       action(ins?.actions, 'link_click')              ||
       parseInt(ins?.clicks ?? '0', 10);
 
-    const reach = parseInt(ins?.reach ?? '0', 10);
-
     totalSpend += spend;
 
-    // ── Classificação por nome de campanha (prioridade sobre objetivo) ──────
-    // Padrão dos clientes: [MENSAGEM], [RECONHECIMENTO], [IMPULSIONAMENTO]
-    const nameHasMensagem      = nameLower.includes('[mensagem]') || nameLower.includes('[message]');
-    const nameHasReconhecimento = nameLower.includes('[reconhecimento]');
+    // Classificação por nome de campanha (prioridade sobre objetivo)
+    // Aceita variações como [MSG], [WHATSAPP], [CONTRATAÇÃO WHATSAPP], [IG], [PERFIL], [TRAFEGO]
+    const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
+    const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
 
-    // Campanha de mensagem: marcada no nome OU tem conversas iniciadas
-    // (exceto se explicitamente marcada como reconhecimento)
-    const isMensagem = nameHasMensagem || (!nameHasReconhecimento && mensagens > 0);
+    const isMensagem = nameHasMensagem || (!nameHasPerfil && mensagens > 0);
 
     if (isMensagem) {
-      mensagemSpend  += spend;
-      totalMensagens += mensagens;
+      campaigns.push({
+        tipo: 'mensagem',
+        name: c.name,
+        spend,
+        mensagens,
+        custoMensagem: mensagens > 0 ? spend / mensagens : 0,
+      });
+    } else if (nameHasPerfil || visitasPerfil > 0) {
+      campaigns.push({
+        tipo: 'seguidores',
+        name: c.name,
+        spend,
+        visitasPerfil,
+        custoVisita: visitasPerfil > 0 ? spend / visitasPerfil : 0,
+      });
     } else {
-      secundariaSpend += spend;
-      const isReconhecimento = nameHasReconhecimento || RECONHECIMENTO_OBJ.has(obj);
-      if (isReconhecimento) {
-        tipoSecundaria = 'reconhecimento';
-        totalReach    += reach;
-      } else {
-        tipoSecundaria = 'impulsionamento';
-        totalVisitas  += visitasPerfil;
-      }
+      campaigns.push({ tipo: 'outro', name: c.name, spend });
     }
   }
 
-  const custoMensagem = totalMensagens > 0 ? mensagemSpend / totalMensagens : 0;
-  const custoVisita   = totalVisitas   > 0 ? secundariaSpend / totalVisitas  : 0;
-
-  return {
-    dateStart,
-    dateStop,
-    totalSpend,
-    mensagem: mensagemSpend > 0 || totalMensagens > 0
-      ? { spend: mensagemSpend, mensagens: totalMensagens, custoMensagem }
-      : null,
-    secundaria: secundariaSpend > 0 && tipoSecundaria
-      ? { tipo: tipoSecundaria, spend: secundariaSpend, visitasPerfil: totalVisitas, custoVisita, pessoasAlcancadas: totalReach }
-      : null,
-  };
+  return { dateStart, dateStop, totalSpend, campaigns };
 }
