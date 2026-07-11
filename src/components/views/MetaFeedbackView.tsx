@@ -125,7 +125,7 @@ function fmtDate(iso: string): string {
 function buildMessage(name: string, data: FeedbackData, sales: KommoSales | null): string {
   const lines: string[] = [
     `Muito bom dia pessoal! Excelente sexta-feira.😁`,
-    `📆 Passando agora, para mostrar os resultados das campanhas nesses últimos 7 dias.`,
+    `📆 Passando agora, para mostrar os resultados das campanhas nesse período.`,
     `(${fmtDate(data.dateStart)} a ${fmtDate(data.dateStop)})`,
     ``,
     `─────${name}─────`,
@@ -172,12 +172,20 @@ function buildMessage(name: string, data: FeedbackData, sales: KommoSales | null
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
+function todayISO(offsetDays = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
 export function MetaFeedbackView() {
   const [states, setStates] = useState<Record<string, StoreState>>(() =>
     Object.fromEntries(ALL_STORES.map(s => [s.key, { status: 'idle' }])),
   );
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [running, setRunning] = useState(false);
+  const [dateFrom, setDateFrom] = useState(todayISO(-6));
+  const [dateTo, setDateTo]     = useState(todayISO(0));
 
   const setStore = useCallback((key: string, state: StoreState) => {
     setStates(prev => ({ ...prev, [key]: state }));
@@ -192,8 +200,8 @@ export function MetaFeedbackView() {
     await mapWithConcurrency(ALL_STORES, 5, 400, async ({ key, accountId, nameFilter }) => {
       try {
         const [data, sales] = await Promise.all([
-          getAccountFeedbackData(accountId, nameFilter),
-          getStoreSales(key).catch(() => null), // se o Kommo falhar, segue só com o Meta
+          getAccountFeedbackData(accountId, nameFilter, dateFrom, dateTo),
+          getStoreSales(key, dateFrom, dateTo).catch(() => null), // se o Kommo falhar, segue só com o Meta
         ]);
         setStore(key, data ? { status: 'done', data, sales } : { status: 'empty' });
       } catch (err: any) {
@@ -202,7 +210,7 @@ export function MetaFeedbackView() {
     });
 
     setRunning(false);
-  }, [setStore]);
+  }, [setStore, dateFrom, dateTo]);
 
   const copyText = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -221,17 +229,38 @@ export function MetaFeedbackView() {
         <div>
           <h1 className="text-2xl font-bold text-white">Feedbacks Meta</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Gera as mensagens de resultado dos últimos 7 dias para todos os clientes.
+            Gera as mensagens de resultado do período selecionado para todos os clientes.
           </p>
         </div>
-        <button
-          onClick={fetchAll}
-          disabled={running}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-purple hover:bg-brand-purple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all"
-        >
-          <RefreshCw className={`w-4 h-4 ${running ? 'animate-spin' : ''}`} />
-          {running ? 'Buscando…' : 'Gerar Feedbacks'}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-gray-500 font-bold">De</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              max={dateTo}
+              className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
+            />
+            <label className="text-xs text-gray-500 font-bold">até</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              min={dateFrom}
+              max={todayISO(0)}
+              className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
+            />
+          </div>
+          <button
+            onClick={fetchAll}
+            disabled={running}
+            className="flex items-center gap-2 px-4 py-2.5 bg-brand-purple hover:bg-brand-purple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${running ? 'animate-spin' : ''}`} />
+            {running ? 'Buscando…' : 'Gerar Feedbacks'}
+          </button>
+        </div>
       </div>
 
       {/* Resumo */}
