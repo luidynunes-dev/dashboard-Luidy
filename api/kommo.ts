@@ -24,6 +24,10 @@ async function kommoFetch(subdomain: string, token: string, path: string) {
   const res = await fetch(`https://${subdomain}.kommo.com/api/v4/${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+  // Kommo retorna 204 (sem corpo) quando não há nenhum resultado — não é erro
+  if (res.status === 204) return { _embedded: { leads: [] } };
+
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Kommo ${res.status}: ${text.slice(0, 200)}`);
