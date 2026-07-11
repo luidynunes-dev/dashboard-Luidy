@@ -186,6 +186,11 @@ export function MetaFeedbackView() {
   const [running, setRunning] = useState(false);
   const [dateFrom, setDateFrom] = useState(todayISO(-6));
   const [dateTo, setDateTo]     = useState(todayISO(0));
+  const [periodMode, setPeriodMode] = useState<'last7' | 'custom'>('last7');
+
+  // No modo "últimos 7 dias", mantém a data sempre recalculada relativa a hoje
+  const effectiveFrom = periodMode === 'last7' ? todayISO(-6) : dateFrom;
+  const effectiveTo   = periodMode === 'last7' ? todayISO(0)  : dateTo;
 
   const setStore = useCallback((key: string, state: StoreState) => {
     setStates(prev => ({ ...prev, [key]: state }));
@@ -200,8 +205,8 @@ export function MetaFeedbackView() {
     await mapWithConcurrency(ALL_STORES, 5, 400, async ({ key, accountId, nameFilter }) => {
       try {
         const [data, sales] = await Promise.all([
-          getAccountFeedbackData(accountId, nameFilter, dateFrom, dateTo),
-          getStoreSales(key, dateFrom, dateTo).catch(() => null), // se o Kommo falhar, segue só com o Meta
+          getAccountFeedbackData(accountId, nameFilter, effectiveFrom, effectiveTo),
+          getStoreSales(key, effectiveFrom, effectiveTo).catch(() => null), // se o Kommo falhar, segue só com o Meta
         ]);
         setStore(key, data ? { status: 'done', data, sales } : { status: 'empty' });
       } catch (err: any) {
@@ -210,7 +215,7 @@ export function MetaFeedbackView() {
     });
 
     setRunning(false);
-  }, [setStore, dateFrom, dateTo]);
+  }, [setStore, effectiveFrom, effectiveTo]);
 
   const copyText = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -233,25 +238,53 @@ export function MetaFeedbackView() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-500 font-bold">De</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
-              max={dateTo}
-              className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
-            />
-            <label className="text-xs text-gray-500 font-bold">até</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
-              min={dateFrom}
-              max={todayISO(0)}
-              className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
-            />
+          {/* Toggle de modo */}
+          <div className="flex items-center gap-1 bg-brand-dark border border-brand-light rounded-lg p-1">
+            <button
+              onClick={() => setPeriodMode('last7')}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                periodMode === 'last7'
+                  ? 'bg-brand-purple text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Últimos 7 dias
+            </button>
+            <button
+              onClick={() => setPeriodMode('custom')}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                periodMode === 'custom'
+                  ? 'bg-brand-purple text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Personalizado
+            </button>
           </div>
+
+          {/* Campos de data — só aparecem no modo personalizado */}
+          {periodMode === 'custom' && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 font-bold">De</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                max={dateTo}
+                className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
+              />
+              <label className="text-xs text-gray-500 font-bold">até</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                min={dateFrom}
+                max={todayISO(0)}
+                className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
+              />
+            </div>
+          )}
+
           <button
             onClick={fetchAll}
             disabled={running}
