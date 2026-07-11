@@ -129,12 +129,18 @@ export interface FeedbackData {
 }
 
 // nameFilter: keyword do nome da campanha (ex: 'MANAUARA') — usado em contas compartilhadas por mais de uma loja
+// since/until: formato 'YYYY-MM-DD'. Se não informado, usa os últimos 7 dias.
 export async function getAccountFeedbackData(
   adAccountId: string,
   nameFilter?: string,
+  since?: string,
+  until?: string,
 ): Promise<FeedbackData | null> {
   const insFields = 'spend,reach,clicks,actions,cost_per_action_type,date_start,date_stop';
-  const fields    = `id,name,objective,effective_status,insights.date_preset(last_7d){${insFields}}`;
+  const timeRange = since && until
+    ? `insights.time_range({"since":"${since}","until":"${until}"}){${insFields}}`
+    : `insights.date_preset(last_7d){${insFields}}`;
+  const fields = `id,name,objective,effective_status,${timeRange}`;
   const url = `${BASE}/${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&limit=50&access_token=${TOKEN}`;
   const json = await apiFetch(url);
 
