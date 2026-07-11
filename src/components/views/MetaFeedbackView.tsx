@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Copy, Check, RefreshCw, MessageSquare } from 'lucide-react';
 import { META_ACCOUNTS } from '../../config/metaAccounts';
 import { getAccountFeedbackData, FeedbackData } from '../../services/metaService';
+import { getStoreSales, mapWithConcurrency, KommoSales } from '../../services/kommoService';
 
 // Nome de exibição para cada chave do META_ACCOUNTS
 const DISPLAY_NAMES: Record<string, string> = {
@@ -103,7 +104,7 @@ const ALL_STORES: StoreEntry[] = [
 type StoreState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; data: FeedbackData }
+  | { status: 'done'; data: FeedbackData; sales: KommoSales | null }
   | { status: 'empty' }
   | { status: 'error'; message: string };
 
@@ -115,7 +116,7 @@ function fmtNumber(n: number): string {
   return n.toLocaleString('pt-BR');
 }
 
-function buildMessage(name: string, data: FeedbackData): string {
+function buildMessage(name: string, data: FeedbackData, sales: KommoSales | null): string {
   const lines: string[] = [
     `Muito bom dia pessoal! Excelente sexta-feira.😁`,
     `📆 Passando agora, para mostrar os resultados das campanhas nesses últimos 7 dias.`,
@@ -150,11 +151,14 @@ function buildMessage(name: string, data: FeedbackData): string {
     }
   }
 
-  // TODO: integrar com a API do Kommo para puxar vendas reais dos últimos 7 dias.
-  // Por enquanto, esses campos ficam para preenchimento manual.
   lines.push(`🟢 Resultados (Kommo) 🟢`);
-  lines.push(`🛍️ Vendas realizadas: —`);
-  lines.push(`💰 Valor em vendas: R$ —`);
+  if (sales) {
+    lines.push(`🛍️ Vendas realizadas: ${fmtNumber(sales.vendas)}`);
+    lines.push(`💰 Valor em vendas: R$ ${fmtBRL(sales.valorVendas)}`);
+  } else {
+    lines.push(`🛍️ Vendas realizadas: —`);
+    lines.push(`💰 Valor em vendas: R$ —`);
+  }
 
   return lines.join('\n');
 }
@@ -176,16 +180,19 @@ export function MetaFeedbackView() {
     setRunning(true);
     setStates(Object.fromEntries(ALL_STORES.map(s => [s.key, { status: 'loading' }])));
 
-    await Promise.all(
-      ALL_STORES.map(async ({ key, accountId, nameFilter }) => {
-        try {
-          const data = await getAccountFeedbackData(accountId, nameFilter);
-          setStore(key, data ? { status: 'done', data } : { status: 'empty' });
-        } catch (err: any) {
-          setStore(key, { status: 'error', message: err?.message ?? 'Erro desconhecido' });
-        }
-      }),
-    );
+    // Lotes de 5 lojas por vez, com 400ms de intervalo — bem abaixo do limite
+    // do Kommo (7 req/s), mesmo considerando que cada loja é uma conta separada.
+    await mapWithConcurrency(ALL_STORES, 5, 400, async ({ key, accountId, nameFilter }) => {
+      try {
+        const [data, sales] = await Promise.all([
+          getAccountFeedbackData(accountId, nameFilter),
+          getStoreSales(key).catch(() => null), // se o Kommo falhar, segue só com o Meta
+        ]);
+        setStore(key, data ? { status: 'done', data, sales } : { status: 'empty' });
+      } catch (err: any) {
+        setStore(key, { status: 'error', message: err?.message ?? 'Erro desconhecido' });
+      }
+    });
 
     setRunning(false);
   }, [setStore]);
@@ -233,7 +240,7 @@ export function MetaFeedbackView() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {ALL_STORES.map(({ key, name }) => {
           const state = states[key];
-          const message = state.status === 'done' ? buildMessage(name, state.data) : '';
+          const message = state.status === 'done' ? buildMessage(name, state.data, state.sales) : '';
 
           return (
             <div
