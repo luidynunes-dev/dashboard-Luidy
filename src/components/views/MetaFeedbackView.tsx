@@ -48,8 +48,9 @@ const DISPLAY_NAMES: Record<string, string> = {
   'brothers-shoes':      'Brothers Shoes',
   'usaflex-patos-minas': 'Usaflex Patos de Minas',
   'fetiche-love-shop':   'Fetiche Love Shop',
-  'swarovski-maringa':   'Swarovski Maringá',
+  'swarovski-maringa':   'Swarovski Maringá Park',
   'swarovski-curitiba':  'Swarovski Curitiba',
+  'swarovski-quiosque':  'Swarovski Maringá Quiosque',
   'usaflex-savassi':     'Usaflex Savassi',
   're-calcados':         'Rê Calçados',
   'santa-lolla':         'Santa Lolla',
@@ -82,7 +83,7 @@ const WHATSAPP_GROUPS: { id: string; name: string; storeKeys: string[] }[] = [
   { id: 'g-fetiche', name: 'Fetiche Love', storeKeys: ['fetiche-love-shop'] },
   { id: 'g-re', name: 'Rê Calçados', storeKeys: ['re-calcados'] },
   { id: 'g-santa-lolla', name: 'Santa Lolla Santo Antão', storeKeys: ['santa-lolla'] },
-  { id: 'g-swarovski', name: 'Swarovski Maringá | Curitiba', storeKeys: ['swarovski-maringa','swarovski-curitiba'] },
+  { id: 'g-swarovski', name: 'Swarovski Maringá | Curitiba', storeKeys: ['swarovski-maringa','swarovski-curitiba','swarovski-quiosque'] },
   { id: 'g-usaflex-araxa', name: 'Usaflex Araxá', storeKeys: ['usaflex-araxa'] },
   { id: 'g-usaflex-cascavel', name: 'Usaflex Cascavel', storeKeys: ['usaflex-cascavel'] },
   { id: 'g-usaflex-patos', name: 'Usaflex Patos de Minas', storeKeys: ['usaflex-patos-minas'] },
@@ -91,12 +92,23 @@ const WHATSAPP_GROUPS: { id: string; name: string; storeKeys: string[] }[] = [
 ];
 
 // Contas compartilhadas por mais de uma loja: cada loja filtra por keyword no nome de campanha.
-const MULTI_STORE_GROUPS: { accountId: string; stores: { key: string; name: string; nameFilter: string }[] }[] = [
+const MULTI_STORE_GROUPS: { accountId: string; stores: { key: string; name: string; nameFilter?: string; excludeFilters?: string[]; noKommo?: boolean }[] }[] = [
   {
     accountId: META_ACCOUNTS['ferracini-manauara-gesta'],
     stores: [
       { key: 'ferracini-manauara-gesta', name: 'Ferracini Manauara', nameFilter: 'MANAUARA' },
       { key: 'ferracini-amazonas-gesta', name: 'Ferracini Amazonas', nameFilter: 'AMAZONAS' },
+    ],
+  },
+  {
+    // Conta compartilhada Swarovski: Maringá Park + Curitiba + Maringá Quiosque (cortesia)
+    accountId: META_ACCOUNTS['swarovski-maringa'],
+    stores: [
+      // Maringá Park = todas as campanhas que NÃO são de Curitiba nem do Quiosque
+      { key: 'swarovski-maringa',  name: 'Swarovski Maringá Park',     excludeFilters: ['CURITIBA', 'QUIOSQUE'] },
+      { key: 'swarovski-curitiba', name: 'Swarovski Curitiba',         nameFilter: 'CURITIBA' },
+      // Quiosque não tem Kommo — a seção de vendas é omitida no feedback
+      { key: 'swarovski-quiosque', name: 'Swarovski Maringá Quiosque', nameFilter: 'QUIOSQUE', noKommo: true },
     ],
   },
 ];
@@ -106,10 +118,12 @@ const MULTI_STORE_KEYS = new Set(
 );
 
 interface StoreEntry {
-  key:         string;
-  name:        string;
-  accountId:   string;
-  nameFilter?: string;
+  key:            string;
+  name:           string;
+  accountId:      string;
+  nameFilter?:    string;
+  excludeFilters?: string[];
+  noKommo?:       boolean;
 }
 
 const SINGLE_STORE_ENTRIES: StoreEntry[] = Object.entries(META_ACCOUNTS)
@@ -163,7 +177,7 @@ function buildHeader(since: string, until: string): string {
 }
 
 // Bloco de UMA loja (sem cabeçalho)
-function buildStoreBlock(name: string, state: StoreState): string {
+function buildStoreBlock(name: string, state: StoreState, noKommo?: boolean): string {
   const lines: string[] = [``, `─────${name}─────`, ``];
 
   if (state.status === 'done') {
@@ -195,17 +209,19 @@ function buildStoreBlock(name: string, state: StoreState): string {
       }
     }
 
-    lines.push(`🟢 Resultados (Kommo) 🟢`);
-    if (sales) {
-      lines.push(`🛍️ Vendas realizadas: ${fmtNumber(sales.vendas)}`);
-      lines.push(`💰 Valor em vendas: R$ ${fmtBRL(sales.valorVendas)}`);
-    } else {
-      lines.push(`🛍️ Vendas realizadas: —`);
-      lines.push(`💰 Valor em vendas: R$ —`);
+    if (!noKommo) {
+      lines.push(`🟢 Resultados (Kommo) 🟢`);
+      if (sales) {
+        lines.push(`🛍️ Vendas realizadas: ${fmtNumber(sales.vendas)}`);
+        lines.push(`💰 Valor em vendas: R$ ${fmtBRL(sales.valorVendas)}`);
+      } else {
+        lines.push(`🛍️ Vendas realizadas: —`);
+        lines.push(`💰 Valor em vendas: R$ —`);
+      }
     }
   } else if (state.status === 'empty') {
     lines.push(`Sem campanhas ativas nesse período.`);
-    if (state.sales) {
+    if (!noKommo && state.sales) {
       lines.push(``);
       lines.push(`🟢 Resultados (Kommo) 🟢`);
       lines.push(`🛍️ Vendas realizadas: ${fmtNumber(state.sales.vendas)}`);
@@ -248,11 +264,11 @@ export function MetaFeedbackView() {
     setStates(Object.fromEntries(ALL_STORES.map(s => [s.key, { status: 'loading' }])));
 
     // Lotes de 5 lojas por vez, com 400ms de intervalo — bem abaixo do limite do Kommo (7 req/s)
-    await mapWithConcurrency(ALL_STORES, 5, 400, async ({ key, accountId, nameFilter }) => {
+    await mapWithConcurrency(ALL_STORES, 5, 400, async ({ key, accountId, nameFilter, excludeFilters, noKommo }) => {
       try {
         const [data, sales] = await Promise.all([
-          getAccountFeedbackData(accountId, nameFilter, effectiveFrom, effectiveTo),
-          getStoreSales(key, effectiveFrom, effectiveTo).catch(() => null),
+          getAccountFeedbackData(accountId, nameFilter, effectiveFrom, effectiveTo, excludeFilters),
+          noKommo ? Promise.resolve(null) : getStoreSales(key, effectiveFrom, effectiveTo).catch(() => null),
         ]);
         setStore(key, data ? { status: 'done', data, sales } : { status: 'empty', sales });
       } catch (err: any) {
@@ -387,7 +403,7 @@ export function MetaFeedbackView() {
 
             const message = loaded.length > 0
               ? buildHeader(effectiveFrom, effectiveTo) +
-                loaded.map(s => buildStoreBlock(s.name, s.state)).join('\n')
+                loaded.map(s => buildStoreBlock(s.name, s.state, STORE_BY_KEY[s.key]?.noKommo)).join('\n')
               : '';
 
             return (
@@ -445,7 +461,7 @@ export function MetaFeedbackView() {
           {ALL_STORES.map(({ key, name }) => {
             const state = states[key];
             const message = (state.status === 'done' || state.status === 'empty')
-              ? buildHeader(effectiveFrom, effectiveTo) + buildStoreBlock(name, state)
+              ? buildHeader(effectiveFrom, effectiveTo) + buildStoreBlock(name, state, STORE_BY_KEY[key]?.noKommo)
               : '';
 
             return (
