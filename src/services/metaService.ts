@@ -129,12 +129,14 @@ export interface FeedbackData {
 }
 
 // nameFilter: keyword do nome da campanha (ex: 'MANAUARA') — usado em contas compartilhadas por mais de uma loja
+// excludeFilters: keywords que EXCLUEM campanhas (ex: ['CURITIBA','QUIOSQUE'] para pegar "todo o resto")
 // since/until: formato 'YYYY-MM-DD'. Se não informado, usa os últimos 7 dias.
 export async function getAccountFeedbackData(
   adAccountId: string,
   nameFilter?: string,
   since?: string,
   until?: string,
+  excludeFilters?: string[],
 ): Promise<FeedbackData | null> {
   const insFields = 'spend,reach,clicks,actions,cost_per_action_type,date_start,date_stop';
   const timeRange = since && until
@@ -150,6 +152,13 @@ export async function getAccountFeedbackData(
   if (nameFilter) {
     const kw = nameFilter.toUpperCase();
     candidates = candidates.filter((c: any) => (c.name ?? '').toUpperCase().includes(kw));
+  }
+  if (excludeFilters && excludeFilters.length > 0) {
+    const kws = excludeFilters.map(k => k.toUpperCase());
+    candidates = candidates.filter((c: any) => {
+      const n = (c.name ?? '').toUpperCase();
+      return !kws.some(kw => n.includes(kw));
+    });
   }
 
   // Apenas campanhas com gasto no período
