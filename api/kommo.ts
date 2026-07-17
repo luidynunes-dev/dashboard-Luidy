@@ -35,19 +35,38 @@ async function kommoFetch(subdomain: string, token: string, path: string) {
   return res.json();
 }
 
-// Vendas fechadas no período informado (timestamps Unix, em segundos)
+// Vendas fechadas (status "Venda ganha") no período informado (timestamps Unix, em segundos)
 async function getSales(account: KommoAccount, from: number, to: number) {
   const wonStatusId = account.wonStatusId ?? 142; // 142 = status padrão "Venda ganha" no Kommo
 
-  const json = await kommoFetch(
-    account.subdomain,
-    account.token,
-    `leads?filter[closed_at][from]=${from}&filter[closed_at][to]=${to}&filter[statuses][0][status_id]=${wonStatusId}&limit=250`,
-  );
+  let vendas = 0;
+  let valorVendas = 0;
+  let page = 1;
 
-  const leads = json._embedded?.leads ?? [];
-  const vendas = leads.length;
-  const valorVendas = leads.reduce((sum: number, l: any) => sum + (l.price ?? 0), 0);
+  // Pagina até esgotar os resultados (o filtro de status é aplicado aqui no
+  // código, lead a lead — o filtro de status da API do Kommo exige pipeline_id
+  // junto e pode ser ignorado silenciosamente sem ele, contando leads perdidos)
+  while (page <= 20) { // trava de segurança: máx. 20 páginas (5.000 leads)
+    const json = await kommoFetch(
+      account.subdomain,
+      account.token,
+      `leads?filter[closed_at][from]=${from}&filter[closed_at][to]=${to}&limit=250&page=${page}`,
+    );
+
+    const leads = json._embedded?.leads ?? [];
+    if (leads.length === 0) break;
+
+    for (const l of leads) {
+      if (l.status_id === wonStatusId) {
+        vendas += 1;
+        valorVendas += (l.price ?? 0);
+      }
+    }
+
+    if (leads.length < 250) break; // última página
+    page += 1;
+  }
+
   return { vendas, valorVendas };
 }
 
@@ -60,8 +79,10 @@ export default async function handler(req: Request): Promise<Response> {
   const sinceParam = url.searchParams.get('since');
   const untilParam = url.searchParams.get('until');
 
-  const to   = untilParam ? Math.floor(new Date(`${untilParam}T23:59:59Z`).getTime() / 1000) : Math.floor(Date.now() / 1000);
-  const from = sinceParam ? Math.floor(new Date(`${sinceParam}T00:00:00Z`).getTime() / 1000) : to - 7 * 86400;
+  // Interpreta as datas no fuso de Brasília (-03:00), que é como as vendas
+  // são registradas na operação — não em UTC.
+  const to   = untilParam ? Math.floor(new Date(`${untilParam}T23:59:59-03:00`).getTime() / 1000) : Math.floor(Date.now() / 1000);
+  const from = sinceParam ? Math.floor(new Date(`${sinceParam}T00:00:00-03:00`).getTime() / 1000) : to - 7 * 86400;
 
   if (!storeId) {
     return new Response(JSON.stringify({ error: 'storeId é obrigatório' }), { status: 400 });
