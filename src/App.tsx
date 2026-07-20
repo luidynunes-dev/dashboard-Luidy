@@ -14,6 +14,7 @@ import { AtendimentoView } from './components/views/AtendimentoView';
 import { CriativosView }   from './components/views/CriativosView';
 import { VipView }         from './components/views/VipView';
 import { DataEntryView }   from './components/views/DataEntryView';
+import { WhatsappStatusView } from './components/views/WhatsappStatusView';
 import { MetaAdsView }     from './components/views/MetaAdsView';
 import { MetaFeedbackView } from './components/views/MetaFeedbackView';
 import { UsersAdminView }  from './components/views/UsersAdminView';
@@ -29,6 +30,7 @@ export type ActiveView =
   | { type: 'criativos' }
   | { type: 'vip' }
   | { type: 'data-entry' }
+  | { type: 'whatsapp-status' }
   | { type: 'meta-ads' }
   | { type: 'meta-feedback' }
   | { type: 'users' }
@@ -143,6 +145,7 @@ export default function App() {
     : activeView.type === 'criativos'   ? 'Inteligência de Criativos'
     : activeView.type === 'vip'         ? 'Gerador VIP'
     : activeView.type === 'data-entry'  ? 'Lançar Resultado'
+    : activeView.type === 'whatsapp-status' ? 'Conexão WhatsApp'
     : activeView.type === 'meta-ads'    ? 'Meta Ads'
     : activeView.type === 'meta-feedback' ? 'Feedbacks Meta'
     : activeView.type === 'users'       ? 'Usuários'
@@ -154,7 +157,7 @@ export default function App() {
     if (!isMaster && ['atendimento', 'criativos', 'vip', 'users'].includes(activeView.type)) {
       setActiveView({ type: 'home' });
     }
-    if (!isMaster && !isStaff && (activeView.type === 'data-entry' || activeView.type === 'meta-ads' || activeView.type === 'meta-feedback')) {
+    if (!isMaster && !isStaff && (activeView.type === 'data-entry' || activeView.type === 'whatsapp-status' || activeView.type === 'meta-ads' || activeView.type === 'meta-feedback')) {
       setActiveView({ type: 'home' });
     }
   }, [isMaster, isStaff, activeView.type]);
@@ -272,6 +275,10 @@ export default function App() {
 
               {isMaster && activeView.type === 'users' && (
                 <UsersAdminView groups={groups} />
+              )}
+
+              {(isMaster || isStaff) && activeView.type === 'whatsapp-status' && (
+                <WhatsappStatusView />
               )}
 
               {(isMaster || isStaff) && activeView.type === 'data-entry' && (
