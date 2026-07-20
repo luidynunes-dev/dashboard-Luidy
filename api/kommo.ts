@@ -100,6 +100,25 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Modo diagnóstico: consulta endpoints candidatos para descobrir onde o
+    // Kommo expõe (ou não) o status de conexão do WhatsApp. Uso temporário.
+    if (action === 'debug') {
+      const results: Record<string, any> = {};
+      const candidates = [
+        'account?with=version,amojo_id',
+        'sources',
+        'talks?limit=5',
+      ];
+      for (const path of candidates) {
+        try {
+          results[path] = await kommoFetch(account.subdomain, account.token, path);
+        } catch (err: any) {
+          results[path] = { erro: err?.message ?? 'falhou' };
+        }
+      }
+      return new Response(JSON.stringify(results, null, 2), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({ error: `action "${action}" não suportada` }), { status: 400 });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message ?? 'Erro desconhecido' }), { status: 500 });
