@@ -26,7 +26,7 @@ async function kommoFetch(subdomain: string, token: string, path: string) {
   });
 
   // Kommo retorna 204 (sem corpo) quando não há nenhum resultado — não é erro
-  if (res.status === 204) return { _embedded: { leads: [] } };
+  if (res.status === 204) return { _embedded: { leads: [], talks: [] } };
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -100,23 +100,19 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
-    // Modo diagnóstico: consulta endpoints candidatos para descobrir onde o
-    // Kommo expõe (ou não) o status de conexão do WhatsApp. Uso temporário.
-    if (action === 'debug') {
-      const results: Record<string, any> = {};
-      const candidates = [
-        'account?with=version,amojo_id',
-        'sources',
-        'talks?limit=5',
-      ];
-      for (const path of candidates) {
-        try {
-          results[path] = await kommoFetch(account.subdomain, account.token, path);
-        } catch (err: any) {
-          results[path] = { erro: err?.message ?? 'falhou' };
-        }
+    // Status do WhatsApp por última atividade: a API do Kommo não expõe o
+    // status de conexão do canal, mas a ausência de conversas novas em contas
+    // que recebem mensagens diariamente é um forte indicador de desconexão.
+    if (action === 'whatsapp-status') {
+      const json = await kommoFetch(account.subdomain, account.token, 'talks?limit=10');
+      const talks = json._embedded?.talks ?? [];
+      let lastActivity: number | null = null;
+      for (const t of talks) {
+        const ts = Math.max(t.updated_at ?? 0, t.created_at ?? 0);
+        if (lastActivity === null || ts > lastActivity) lastActivity = ts;
       }
-      return new Response(JSON.stringify(results, null, 2), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const hoursSince = lastActivity ? (Math.floor(Date.now() / 1000) - lastActivity) / 3600 : null;
+      return new Response(JSON.stringify({ lastActivity, hoursSince }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     return new Response(JSON.stringify({ error: `action "${action}" não suportada` }), { status: 400 });
