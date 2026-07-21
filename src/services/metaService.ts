@@ -245,3 +245,15 @@ export async function getAccountBalance(adAccountId: string): Promise<AccountBal
     disableReason: parseInt(d.disable_reason ?? '0', 10),
   };
 }
+
+// Diagnóstico temporário: retorna os campos crus da conta para identificar
+// onde cada tipo de conta (pré-paga, fundos, cartão) guarda o saldo.
+export async function debugAccountFunding(adAccountId: string): Promise<any> {
+  const fields = [
+    'name','balance','amount_spent','spend_cap','currency','account_status',
+    'funding_source','funding_source_details','is_prepay_account',
+    'next_bill_date','owner','business',
+  ].join(',');
+  const url = `${BASE}/${adAccountId}?fields=${fields}&access_token=${TOKEN}`;
+  return apiFetch(url);
+}
