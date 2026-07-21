@@ -3,6 +3,7 @@ import { RefreshCw, Wallet } from 'lucide-react';
 import { META_ACCOUNTS } from '../../config/metaAccounts';
 import { getAccountBalance, AccountBalance } from '../../services/metaService';
 import { mapWithConcurrency } from '../../services/kommoService';
+import { getAccountBalance, debugAccountFunding, AccountBalance } from '../../services/metaService';
 
 const DISPLAY_NAMES: Record<string, string> = {
   'adidas-performance-porto-velho': 'Adidas Performance Porto Velho',
@@ -76,12 +77,14 @@ export function AccountBalanceView() {
   const [states, setStates] = useState<Record<string, BalState>>({});
   const [running, setRunning] = useState(false);
 
-  const checkAll = useCallback(async () => {
+const checkAll = useCallback(async () => {
     setRunning(true);
     setStates(Object.fromEntries(ACCOUNTS.map(a => [a.id, { status: 'loading' }])));
 
-    await mapWithConcurrency(ACCOUNTS, 5, 300, async ({ id }) => {
+    await mapWithConcurrency(ACCOUNTS, 5, 300, async ({ id, name }) => {
       try {
+        const raw = await debugAccountFunding(id);
+        console.log(`[SALDO] ${name}`, raw); // ← diagnóstico temporário
         const data = await getAccountBalance(id);
         setStates(prev => ({ ...prev, [id]: { status: 'done', data } }));
       } catch (err: any) {
