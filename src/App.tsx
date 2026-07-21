@@ -32,6 +32,7 @@ export type ActiveView =
   | { type: 'vip' }
   | { type: 'data-entry' }
   | { type: 'whatsapp-status' }
+  | { type: 'account-balance' }
   | { type: 'meta-ads' }
   | { type: 'meta-feedback' }
   | { type: 'users' }
@@ -154,8 +155,7 @@ export default function App() {
     : activeView.type === 'consolidado' ? (activeGroup?.name ?? '')
     : activeView.type === 'ranking'     ? 'Ranking'
     : activeStore?.name ?? '—';
-  | { type: 'account-balance' }
-
+  
   useEffect(() => {
     if (!isMaster && ['atendimento', 'criativos', 'vip', 'users'].includes(activeView.type)) {
       setActiveView({ type: 'home' });
