@@ -6,6 +6,18 @@ export interface KommoSales {
   valorVendas: number;
 }
 
+export interface WhatsappStatus {
+  lastActivity: number | null; // timestamp Unix da última conversa
+  hoursSince:   number | null; // horas desde a última atividade
+}
+
+export async function getWhatsappStatus(storeId: string): Promise<WhatsappStatus> {
+  const res = await fetch(`/api/kommo?storeId=${encodeURIComponent(storeId)}&action=whatsapp-status`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? 'Erro ao verificar status do WhatsApp');
+  return json;
+}
+
 export async function getStoreSales(storeId: string, since?: string, until?: string): Promise<KommoSales | null> {
   const params = new URLSearchParams({ storeId, action: 'sales' });
   if (since) params.set('since', since);
