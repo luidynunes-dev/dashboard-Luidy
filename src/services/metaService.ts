@@ -217,3 +217,31 @@ export async function getAccountFeedbackData(
 
   return { dateStart, dateStop, totalSpend, campaigns };
 }
+// ─── Saldo / status da conta de anúncios ────────────────────────────────────
+
+export interface AccountBalance {
+  name:          string;
+  balance:       number;  // saldo disponível (contas pré-pagas), em reais
+  amountSpent:   number;  // gasto acumulado no ciclo, em reais
+  spendCap:      number;  // teto de gasto (0 = sem teto), em reais
+  currency:      string;
+  accountStatus: number;  // 1 = ativa, 2 = desabilitada, 3 = não confirmada, 7 = em revisão, 9 = fechada
+  disableReason: number;  // 0 = nenhum
+}
+
+export async function getAccountBalance(adAccountId: string): Promise<AccountBalance> {
+  const fields = 'name,balance,amount_spent,spend_cap,currency,account_status,disable_reason';
+  const url = `${BASE}/${adAccountId}?fields=${fields}&access_token=${TOKEN}`;
+  const d = await apiFetch(url);
+
+  // A API retorna valores monetários em centavos
+  return {
+    name:          d.name ?? '',
+    balance:       parseFloat(d.balance ?? '0') / 100,
+    amountSpent:   parseFloat(d.amount_spent ?? '0') / 100,
+    spendCap:      parseFloat(d.spend_cap ?? '0') / 100,
+    currency:      d.currency ?? 'BRL',
+    accountStatus: parseInt(d.account_status ?? '0', 10),
+    disableReason: parseInt(d.disable_reason ?? '0', 10),
+  };
+}
