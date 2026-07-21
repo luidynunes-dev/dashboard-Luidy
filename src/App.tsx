@@ -21,6 +21,7 @@ import { UsersAdminView }  from './components/views/UsersAdminView';
 import { useGroups }       from './hooks/useGroups';
 import { useAuth, profileToAccessState } from './hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
+import { AccountBalanceView } from './components/views/AccountBalanceView';
 
 export type ActiveView =
   | { type: 'home' }
@@ -146,12 +147,14 @@ export default function App() {
     : activeView.type === 'vip'         ? 'Gerador VIP'
     : activeView.type === 'data-entry'  ? 'Lançar Resultado'
     : activeView.type === 'whatsapp-status' ? 'Conexão WhatsApp'
+    : activeView.type === 'account-balance' ? 'Saldo das Contas'
     : activeView.type === 'meta-ads'    ? 'Meta Ads'
     : activeView.type === 'meta-feedback' ? 'Feedbacks Meta'
     : activeView.type === 'users'       ? 'Usuários'
     : activeView.type === 'consolidado' ? (activeGroup?.name ?? '')
     : activeView.type === 'ranking'     ? 'Ranking'
     : activeStore?.name ?? '—';
+  | { type: 'account-balance' }
 
   useEffect(() => {
     if (!isMaster && ['atendimento', 'criativos', 'vip', 'users'].includes(activeView.type)) {
@@ -279,6 +282,9 @@ export default function App() {
 
               {(isMaster || isStaff) && activeView.type === 'whatsapp-status' && (
                 <WhatsappStatusView />
+              )}
+              {(isMaster || isStaff) && activeView.type === 'account-balance' && (
+                <AccountBalanceView />
               )}
 
               {(isMaster || isStaff) && activeView.type === 'data-entry' && (
