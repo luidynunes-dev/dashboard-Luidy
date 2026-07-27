@@ -40,6 +40,9 @@ function action(actions: { action_type: string; value: string }[] | undefined, t
 function costPer(list: { action_type: string; value: string }[] | undefined, type: string): number {
   return parseFloat(list?.find(a => a.action_type === type)?.value ?? '0');
 }
+function firstValue(list: { action_type: string; value: string }[] | undefined): number {
+  return parseFloat(list?.[0]?.value ?? '0');
+}
 
 async function apiFetch(url: string) {
   const res = await fetch(url);
@@ -112,20 +115,17 @@ export async function getCampaigns(
 // ─── Feedback semanal (por campanha individual) ─────────────────────────────
 
 export interface CampaignFeedback {
-  tipo: 'mensagem' | 'seguidores' | 'outro';
+  tipo: 'mensagem' | 'seguidores' | 'live' | 'engajamento' | 'outro';
   name: string;
   spend: number;
   mensagens?: number;
   custoMensagem?: number;
   visitasPerfil?: number;
   custoVisita?: number;
-}
-
-export interface FeedbackData {
-  dateStart: string;
-  dateStop:  string;
-  totalSpend: number;
-  campaigns: CampaignFeedback[];
+  thruPlays?: number;
+  custoThruPlay?: number;
+  engajamentos?: number;
+  custoEngajamento?: number;
 }
 
 // nameFilter: keyword do nome da campanha (ex: 'MANAUARA') — usado em contas compartilhadas por mais de uma loja
