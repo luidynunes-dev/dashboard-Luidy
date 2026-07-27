@@ -138,7 +138,7 @@ export async function getAccountFeedbackData(
   until?: string,
   excludeFilters?: string[],
 ): Promise<FeedbackData | null> {
-  const insFields = 'spend,reach,clicks,actions,cost_per_action_type,date_start,date_stop';
+  const insFields = 'spend,reach,clicks,actions,cost_per_action_type,video_thruplay_watched_actions,date_start,date_stop';
   const timeRange = since && until
     ? `insights.time_range({"since":"${since}","until":"${until}"}){${insFields}}`
     : `insights.date_preset(last_7d){${insFields}}`;
@@ -180,6 +180,9 @@ export async function getAccountFeedbackData(
     const mensagens = action(ins?.actions, 'onsite_conversion.messaging_conversation_started_7d');
     const nameLower = (c.name ?? '').toLowerCase();
 
+    const thruPlays    = firstValue(ins?.video_thruplay_watched_actions);
+    const engajamentos = action(ins?.actions, 'post_engagement');
+
     const visitasPerfil =
       action(ins?.actions, 'visit_instagram_profile') ||
       action(ins?.actions, 'link_click')              ||
@@ -188,13 +191,29 @@ export async function getAccountFeedbackData(
     totalSpend += spend;
 
     // Classificação por nome de campanha (prioridade sobre objetivo)
-    // Aceita variações como [MSG], [WHATSAPP], [CONTRATAÇÃO WHATSAPP], [IG], [PERFIL], [TRAFEGO]
+    const nameHasLive     = nameLower.includes('live');
+    const nameHasEngaj    = nameLower.includes('engajamento') || nameLower.includes('engagement')
+                         || nameLower.includes('[eng]')       || nameLower.includes('post');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
     const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
 
-    const isMensagem = nameHasMensagem || (!nameHasPerfil && mensagens > 0);
-
-    if (isMensagem) {
+    if (nameHasLive) {
+      campaigns.push({
+        tipo: 'live',
+        name: c.name,
+        spend,
+        thruPlays,
+        custoThruPlay: thruPlays > 0 ? spend / thruPlays : 0,
+      });
+    } else if (nameHasEngaj) {
+      campaigns.push({
+        tipo: 'engajamento',
+        name: c.name,
+        spend,
+        engajamentos,
+        custoEngajamento: engajamentos > 0 ? spend / engajamentos : 0,
+      });
+    } else if (nameHasMensagem || (!nameHasPerfil && mensagens > 0)) {
       campaigns.push({
         tipo: 'mensagem',
         name: c.name,
@@ -214,9 +233,6 @@ export async function getAccountFeedbackData(
       campaigns.push({ tipo: 'outro', name: c.name, spend });
     }
   }
-
-  return { dateStart, dateStop, totalSpend, campaigns };
-}
 // ─── Saldo / status da conta de anúncios ────────────────────────────────────
 
 export interface AccountBalance {
