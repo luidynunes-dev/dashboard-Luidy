@@ -40,6 +40,7 @@ function action(actions: { action_type: string; value: string }[] | undefined, t
 function costPer(list: { action_type: string; value: string }[] | undefined, type: string): number {
   return parseFloat(list?.find(a => a.action_type === type)?.value ?? '0');
 }
+
 function firstValue(list: { action_type: string; value: string }[] | undefined): number {
   return parseFloat(list?.[0]?.value ?? '0');
 }
@@ -126,6 +127,13 @@ export interface CampaignFeedback {
   custoThruPlay?: number;
   engajamentos?: number;
   custoEngajamento?: number;
+}
+
+export interface FeedbackData {
+  dateStart: string;
+  dateStop:  string;
+  totalSpend: number;
+  campaigns: CampaignFeedback[];
 }
 
 // nameFilter: keyword do nome da campanha (ex: 'MANAUARA') — usado em contas compartilhadas por mais de uma loja
@@ -233,6 +241,10 @@ export async function getAccountFeedbackData(
       campaigns.push({ tipo: 'outro', name: c.name, spend });
     }
   }
+
+  return { dateStart, dateStop, totalSpend, campaigns };
+}
+
 // ─── Saldo / status da conta de anúncios ────────────────────────────────────
 
 export interface AccountBalance {
