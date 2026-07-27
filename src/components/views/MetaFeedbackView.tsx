@@ -171,6 +171,7 @@ function fmtDate(iso: string): string {
 function buildHeader(since: string, until: string): string {
   return [
     `Muito bom dia pessoal! Excelente sexta-feira.😁`,
+    ``,
     `📆 Passando agora, para mostrar os resultados das campanhas nesse período.`,
     `(${fmtDate(since)} a ${fmtDate(until)})`,
   ].join('\n');
@@ -200,6 +201,20 @@ function buildStoreBlock(name: string, state: StoreState, noKommo?: boolean): st
         lines.push(`💵 Investimento Seguidores: R$ ${fmtBRL(c.spend)}`);
         lines.push(`🎯 Visitas ao perfil: ${fmtNumber(c.visitasPerfil ?? 0)}`);
         lines.push(`💲 Custo por visita: R$ ${fmtBRL(c.custoVisita ?? 0)}`);
+        lines.push(``);
+        } else if (c.tipo === 'live') {
+        lines.push(`📣 Campanha de live`);
+        lines.push(`Nome da campanha: ${c.name}`);
+        lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
+        lines.push(`🎯 ThruPlays: ${fmtNumber(c.thruPlays ?? 0)}`);
+        lines.push(`💲 Custo por ThruPlays: R$ ${fmtBRL(c.custoThruPlay ?? 0)}`);
+        lines.push(``);
+      } else if (c.tipo === 'engajamento') {
+        lines.push(`📣 Campanha de engajamento com o post`);
+        lines.push(`Nome da campanha: ${c.name}`);
+        lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
+        lines.push(`🎯 Engajamentos com o post: ${fmtNumber(c.engajamentos ?? 0)}`);
+        lines.push(`💲 Custo por engajamento: R$ ${fmtBRL(c.custoEngajamento ?? 0)}`);
         lines.push(``);
       } else {
         lines.push(`📣 Campanha`);
