@@ -200,8 +200,8 @@ export async function getAccountFeedbackData(
 
     // Classificação por nome de campanha (prioridade sobre objetivo)
     const nameHasLive     = nameLower.includes('live');
-    const nameHasEngaj    = nameLower.includes('engajamento') || nameLower.includes('engagement')
-                         || nameLower.includes('[eng]')       || nameLower.includes('post');
+    const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]')
+                         || nameLower.includes('engagement');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
     const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
 
