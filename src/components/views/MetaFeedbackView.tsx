@@ -202,7 +202,7 @@ function buildStoreBlock(name: string, state: StoreState, noKommo?: boolean): st
         lines.push(`🎯 Visitas ao perfil: ${fmtNumber(c.visitasPerfil ?? 0)}`);
         lines.push(`💲 Custo por visita: R$ ${fmtBRL(c.custoVisita ?? 0)}`);
         lines.push(``);
-        } else if (c.tipo === 'live') {
+      } else if (c.tipo === 'live') {
         lines.push(`📣 Campanha de live`);
         lines.push(`Nome da campanha: ${c.name}`);
         lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
@@ -216,17 +216,17 @@ function buildStoreBlock(name: string, state: StoreState, noKommo?: boolean): st
         lines.push(`🎯 Engajamentos com o post: ${fmtNumber(c.engajamentos ?? 0)}`);
         lines.push(`💲 Custo por engajamento: R$ ${fmtBRL(c.custoEngajamento ?? 0)}`);
         lines.push(``);
-      } else {
-        lines.push(`📣 Campanha`);
-        lines.push(`Nome da campanha: ${c.name}`);
-        lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
-        lines.push(``);
-        } else if (c.tipo === 'leads') {
+      } else if (c.tipo === 'leads') {
         lines.push(`📣 Campanha de leads`);
         lines.push(`Nome da campanha: ${c.name}`);
         lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
         lines.push(`🎯 Leads no site: ${fmtNumber(c.leads ?? 0)}`);
         lines.push(`💲 Custo por lead: R$ ${fmtBRL(c.custoLead ?? 0)}`);
+        lines.push(``);
+      } else {
+        lines.push(`📣 Campanha`);
+        lines.push(`Nome da campanha: ${c.name}`);
+        lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
         lines.push(``);
       }
     }
