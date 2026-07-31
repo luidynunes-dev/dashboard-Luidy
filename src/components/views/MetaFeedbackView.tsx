@@ -221,6 +221,13 @@ function buildStoreBlock(name: string, state: StoreState, noKommo?: boolean): st
         lines.push(`Nome da campanha: ${c.name}`);
         lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
         lines.push(``);
+        } else if (c.tipo === 'leads') {
+        lines.push(`📣 Campanha de leads`);
+        lines.push(`Nome da campanha: ${c.name}`);
+        lines.push(`💵 Investimento: R$ ${fmtBRL(c.spend)}`);
+        lines.push(`🎯 Leads no site: ${fmtNumber(c.leads ?? 0)}`);
+        lines.push(`💲 Custo por lead: R$ ${fmtBRL(c.custoLead ?? 0)}`);
+        lines.push(``);
       }
     }
 
