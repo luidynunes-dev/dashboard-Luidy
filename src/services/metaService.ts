@@ -45,6 +45,12 @@ function firstValue(list: { action_type: string; value: string }[] | undefined):
   return parseFloat(list?.[0]?.value ?? '0');
 }
 
+function actionsContaining(actions: { action_type: string; value: string }[] | undefined, substr: string): number {
+  return (actions ?? [])
+    .filter(a => a.action_type.toLowerCase().includes(substr))
+    .reduce((sum, a) => sum + parseFloat(a.value ?? '0'), 0);
+}
+
 async function apiFetch(url: string) {
   const res = await fetch(url);
   const json = await res.json();
@@ -116,7 +122,7 @@ export async function getCampaigns(
 // ─── Feedback semanal (por campanha individual) ─────────────────────────────
 
 export interface CampaignFeedback {
-  tipo: 'mensagem' | 'seguidores' | 'live' | 'engajamento' | 'outro';
+  tipo: 'mensagem' | 'seguidores' | 'live' | 'engajamento' | 'leads' | 'outro';
   name: string;
   spend: number;
   mensagens?: number;
@@ -127,6 +133,8 @@ export interface CampaignFeedback {
   custoThruPlay?: number;
   engajamentos?: number;
   custoEngajamento?: number;
+  leads?: number;
+  custoLead?: number;
 }
 
 export interface FeedbackData {
@@ -190,6 +198,7 @@ export async function getAccountFeedbackData(
 
     const thruPlays    = firstValue(ins?.video_thruplay_watched_actions);
     const engajamentos = action(ins?.actions, 'post_engagement');
+    const leads        = actionsContaining(ins?.actions, 'lead');
 
     const visitasPerfil =
       action(ins?.actions, 'visit_instagram_profile') ||
@@ -200,6 +209,7 @@ export async function getAccountFeedbackData(
 
     // Classificação por nome de campanha (prioridade sobre objetivo)
     const nameHasLive     = nameLower.includes('live');
+    const nameHasLeads    = nameLower.includes('[leads]') || nameLower.includes('[site]');
     const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]')
                          || nameLower.includes('engagement');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
@@ -212,6 +222,14 @@ export async function getAccountFeedbackData(
         spend,
         thruPlays,
         custoThruPlay: thruPlays > 0 ? spend / thruPlays : 0,
+      });
+    } else if (nameHasLeads) {
+      campaigns.push({
+        tipo: 'leads',
+        name: c.name,
+        spend,
+        leads,
+        custoLead: leads > 0 ? spend / leads : 0,
       });
     } else if (nameHasEngaj) {
       campaigns.push({
