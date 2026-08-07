@@ -35,7 +35,7 @@ export const META_ACCOUNTS: Record<string, string> = {
   'loungerie-porto-velho': 'act_1137742971734250',
   'petite-jolie-sumauma':  'act_1849912155935703',
   'petite-jolie-manauara': 'act_731870639479535',
-  'petite-jolie-boulevard': 'act_248915805821851',
+  'petite-jolie-boulevard': 'act_2489158058218512',
   'petite-jolie-patio-belem':    'act_794484893612690',
   'ferracini-manauara-gesta': 'act_1029736459002232',
   'ferracini-belem-gesta':    'act_535859608855182',
