@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw, ChevronDown } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { getStoreReport, StoreReport } from '../../services/metaService';
 import { WHATSAPP_GROUPS, DISPLAY_NAMES, STORE_BY_KEY } from '../../config/storeGroups';
+import { DateRangePicker } from '../DateRangePicker';
 
 type ReportState =
   | { status: 'idle' }
@@ -76,28 +77,14 @@ export function ReporteiReunioesView() {
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
-          <ChevronDown className="w-4 h-4 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-gray-500 font-bold">De</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
-            max={dateTo}
-            className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
-          />
-          <label className="text-xs text-gray-500 font-bold">até</label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
-            min={dateFrom}
-            max={todayISO(0)}
-            className="bg-brand-dark border border-brand-light rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-brand-purple"
-          />
-        </div>
+        <DateRangePicker
+          from={dateFrom}
+          to={dateTo}
+          onChange={(f, t) => { setDateFrom(f); setDateTo(t); }}
+          maxDate={todayISO(0)}
+        />
       </div>
 
       {/* Abas das lojas do grupo */}
