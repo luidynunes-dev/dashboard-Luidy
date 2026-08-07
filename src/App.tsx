@@ -22,6 +22,7 @@ import { useGroups }       from './hooks/useGroups';
 import { useAuth, profileToAccessState } from './hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
 import { AccountBalanceView } from './components/views/AccountBalanceView';
+import { ReporteiReunioesView } from './components/views/ReporteiReunioesView';
 
 export type ActiveView =
   | { type: 'home' }
@@ -35,6 +36,7 @@ export type ActiveView =
   | { type: 'account-balance' }
   | { type: 'meta-ads' }
   | { type: 'meta-feedback' }
+  | { type: 'reportei-reunioes' }
   | { type: 'users' }
   | { type: 'store'; storeId: string };
 
@@ -151,16 +153,17 @@ export default function App() {
     : activeView.type === 'account-balance' ? 'Saldo das Contas'
     : activeView.type === 'meta-ads'    ? 'Meta Ads'
     : activeView.type === 'meta-feedback' ? 'Feedbacks Meta'
+    : activeView.type === 'reportei-reunioes' ? 'Reportei Reuniões'
     : activeView.type === 'users'       ? 'Usuários'
     : activeView.type === 'consolidado' ? (activeGroup?.name ?? '')
     : activeView.type === 'ranking'     ? 'Ranking'
     : activeStore?.name ?? '—';
-  
+
   useEffect(() => {
     if (!isMaster && ['atendimento', 'criativos', 'vip', 'users'].includes(activeView.type)) {
       setActiveView({ type: 'home' });
     }
-    if (!isMaster && !isStaff && (activeView.type === 'data-entry' || activeView.type === 'whatsapp-status' || activeView.type === 'meta-ads' || activeView.type === 'meta-feedback')) {
+    if (!isMaster && !isStaff && (activeView.type === 'data-entry' || activeView.type === 'whatsapp-status' || activeView.type === 'meta-ads' || activeView.type === 'meta-feedback' || activeView.type === 'reportei-reunioes')) {
       setActiveView({ type: 'home' });
     }
   }, [isMaster, isStaff, activeView.type]);
@@ -293,6 +296,10 @@ export default function App() {
 
               {(isMaster || isStaff) && activeView.type === 'meta-feedback' && (
                 <MetaFeedbackView />
+              )}
+
+              {(isMaster || isStaff) && activeView.type === 'reportei-reunioes' && (
+                <ReporteiReunioesView />
               )}
 
               {activeView.type === 'consolidado' && activeGroup.stores.length === 0 && <EmptyGroupView group={activeGroup} />}
