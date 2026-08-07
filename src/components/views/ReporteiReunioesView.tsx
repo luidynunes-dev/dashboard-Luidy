@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw, Pencil, Download } from 'lucide-react';
+import { RefreshCw, Pencil } from 'lucide-react';
 import { getStoreReport, StoreReport } from '../../services/metaService';
 import { getStoreSales, KommoSales } from '../../services/kommoService';
 import { WHATSAPP_GROUPS, DISPLAY_NAMES, STORE_BY_KEY } from '../../config/storeGroups';
@@ -74,8 +74,6 @@ export function ReporteiReunioesView() {
     }
   }, [storeKey, dateFrom, dateTo]);
 
-  const handlePrint = () => window.print();
-
   const storeName = DISPLAY_NAMES[storeKey] ?? storeKey;
   const currentStore = STORE_BY_KEY[storeKey];
 
@@ -92,13 +90,13 @@ export function ReporteiReunioesView() {
 
   return (
     <div className="space-y-6">
-      <div className="no-print">
+      <div>
         <h1 className="text-2xl font-bold text-white">Reportei Reuniões</h1>
         <p className="text-sm text-gray-500 mt-1">Painel individual por loja, para apresentar em reunião.</p>
       </div>
 
       {/* Seletor de grupo */}
-      <div className="flex flex-wrap items-center gap-3 no-print">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
           <select
             value={groupId}
@@ -120,7 +118,7 @@ export function ReporteiReunioesView() {
       </div>
 
       {/* Abas das lojas do grupo */}
-      <div className="flex flex-wrap gap-2 no-print">
+      <div className="flex flex-wrap gap-2">
         {group.storeKeys.map(key => (
           <button
             key={key}
@@ -134,36 +132,24 @@ export function ReporteiReunioesView() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 no-print">
-        <button
-          onClick={fetchReport}
-          disabled={report.status === 'loading'}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-purple hover:bg-brand-purple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all"
-        >
-          <RefreshCw className={`w-4 h-4 ${report.status === 'loading' ? 'animate-spin' : ''}`} />
-          {report.status === 'loading' ? 'Buscando…' : 'Gerar Relatório'}
-        </button>
-
-        {report.status === 'done' && (
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2.5 bg-brand-light hover:bg-brand-light/80 text-white text-sm font-bold rounded-lg transition-all"
-          >
-            <Download className="w-4 h-4" />
-            Baixar PDF
-          </button>
-        )}
-      </div>
+      <button
+        onClick={fetchReport}
+        disabled={report.status === 'loading'}
+        className="flex items-center gap-2 px-4 py-2.5 bg-brand-purple hover:bg-brand-purple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-lg transition-all"
+      >
+        <RefreshCw className={`w-4 h-4 ${report.status === 'loading' ? 'animate-spin' : ''}`} />
+        {report.status === 'loading' ? 'Buscando…' : 'Gerar Relatório'}
+      </button>
 
       {/* Conteúdo */}
       {report.status === 'idle' && (
-        <p className="text-sm text-gray-600 italic no-print">Selecione o grupo, a loja e o período, depois clique em "Gerar Relatório".</p>
+        <p className="text-sm text-gray-600 italic">Selecione o grupo, a loja e o período, depois clique em "Gerar Relatório".</p>
       )}
       {report.status === 'error' && (
-        <p className="text-sm text-red-400 no-print">Erro: {report.message}</p>
+        <p className="text-sm text-red-400">Erro: {report.message}</p>
       )}
       {report.status === 'done' && (
-        <div id="printable-report" className="space-y-6">
+        <div className="space-y-6">
           <div>
             <h2 className="text-lg font-bold text-white">{storeName}</h2>
             <p className="text-xs text-gray-500">{fmtDateBR(dateFrom)} a {fmtDateBR(dateTo)}</p>
@@ -197,7 +183,7 @@ export function ReporteiReunioesView() {
                 <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
                   <div className="flex items-center gap-1.5 mb-1">
                     <p className="text-[10px] text-gray-600 uppercase font-bold">Vendas</p>
-                    <Pencil className="w-3 h-3 text-gray-600 no-print" />
+                    <Pencil className="w-3 h-3 text-gray-600" />
                   </div>
                   <input
                     type="number"
@@ -209,7 +195,7 @@ export function ReporteiReunioesView() {
                 <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
                   <div className="flex items-center gap-1.5 mb-1">
                     <p className="text-[10px] text-gray-600 uppercase font-bold">Valor em vendas</p>
-                    <Pencil className="w-3 h-3 text-gray-600 no-print" />
+                    <Pencil className="w-3 h-3 text-gray-600" />
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xl font-bold text-white">R$</span>
@@ -232,7 +218,7 @@ export function ReporteiReunioesView() {
                 </div>
               </div>
               {(vendasOverride !== null || valorVendasOverride !== null) && (
-                <p className="text-[10px] text-amber-400 mt-2 no-print">
+                <p className="text-[10px] text-amber-400 mt-2">
                   ✏️ Valores editados manualmente nesta sessão — não foram salvos permanentemente.
                 </p>
               )}
