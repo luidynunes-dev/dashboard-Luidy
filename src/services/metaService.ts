@@ -305,6 +305,17 @@ export async function debugAccountFunding(adAccountId: string): Promise<any> {
 
 // ─── Relatório individual por loja (Reportei Reuniões) ──────────────────────
 
+export interface AdHighlight {
+  id: string;
+  name: string;
+  thumbnailUrl?: string;
+  spend: number;
+  reach: number;
+  impressions: number;
+  clicks: number;
+  mensagens: number;
+}
+
 export interface ReportCampaign {
   id: string;
   name: string;
@@ -322,6 +333,7 @@ export interface ReportCampaign {
   custoEngajamento?: number;
   leads?: number;
   custoLead?: number;
+  topAds?: AdHighlight[];
 }
 
 export interface StoreReport {
@@ -330,6 +342,40 @@ export interface StoreReport {
   totalImpressions: number;
   totalMensagens: number;
   campaigns: ReportCampaign[];
+}
+
+async function fetchTopAds(campaignId: string, since?: string, until?: string): Promise<AdHighlight[]> {
+  const insFields = 'spend,reach,impressions,clicks,actions';
+  const timeRange = since && until
+    ? `insights.time_range({"since":"${since}","until":"${until}"}){${insFields}}`
+    : `insights.date_preset(last_7d){${insFields}}`;
+  const fields = `id,name,creative{thumbnail_url},${timeRange}`;
+  const url = `${BASE}/${campaignId}/ads?fields=${encodeURIComponent(fields)}&limit=50&access_token=${TOKEN}`;
+
+  let json: any;
+  try {
+    json = await apiFetch(url);
+  } catch {
+    return []; // não deixa o relatório inteiro cair por causa de um erro nos anúncios
+  }
+
+  const ads: AdHighlight[] = (json.data ?? []).map((a: any) => {
+    const ins = a.insights?.data?.[0];
+    return {
+      id: a.id,
+      name: a.name,
+      thumbnailUrl: a.creative?.thumbnail_url,
+      spend: parseFloat(ins?.spend ?? '0'),
+      reach: parseInt(ins?.reach ?? '0', 10),
+      impressions: parseInt(ins?.impressions ?? '0', 10),
+      clicks: parseInt(ins?.clicks ?? '0', 10),
+      mensagens: action(ins?.actions, 'onsite_conversion.messaging_conversation_started_7d'),
+    };
+  });
+
+  const withSpend = ads.filter(a => a.spend > 0);
+  withSpend.sort((a, b) => (b.mensagens - a.mensagens) || (b.spend - a.spend));
+  return withSpend.slice(0, 3);
 }
 
 export async function getStoreReport(
@@ -390,13 +436,15 @@ export async function getStoreReport(
     totalImpressions  += impressions;
     totalMensagens    += mensagens;
 
+    const topAds = await fetchTopAds(c.id, since, until);
+
     const nameHasLive     = nameLower.includes('live');
     const nameHasLeads    = nameLower.includes('[leads]') || nameLower.includes('[site]');
     const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]') || nameLower.includes('engagement');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
     const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
 
-    const base = { id: c.id, name: c.name, spend, reach, impressions };
+    const base = { id: c.id, name: c.name, spend, reach, impressions, topAds };
 
     if (nameHasLive) {
       campaigns.push({ ...base, tipo: 'live', thruPlays, custoThruPlay: thruPlays > 0 ? spend / thruPlays : 0 });
