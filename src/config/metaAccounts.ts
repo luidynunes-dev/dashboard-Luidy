@@ -44,7 +44,6 @@ export const META_ACCOUNTS: Record<string, string> = {
   // ── Clientes Avulsos ──────────────────────────────────────────────────────
   'usaflex-araxa':       'act_823343216365236',
   'via-orlandia':        'act_1068742947233010',
-  'brothers-shoes':      'act_743761690728467',
   'usaflex-patos-minas': 'act_6817858824973407',
   'fetiche-love-shop':   'act_1096270989202130',
   'swarovski-maringa':   'act_832597235519705',
