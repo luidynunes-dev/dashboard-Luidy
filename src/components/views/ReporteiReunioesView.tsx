@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Pencil } from 'lucide-react';
 import { getStoreReport, StoreReport } from '../../services/metaService';
+import { getStoreSales, KommoSales } from '../../services/kommoService';
 import { WHATSAPP_GROUPS, DISPLAY_NAMES, STORE_BY_KEY } from '../../config/storeGroups';
 import { DateRangePicker } from '../DateRangePicker';
 
 type ReportState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; data: StoreReport }
+  | { status: 'done'; data: StoreReport; sales: KommoSales | null }
   | { status: 'error'; message: string };
 
 function fmtBRL(value: number): string {
@@ -32,31 +33,56 @@ export function ReporteiReunioesView() {
   const [dateFrom, setDateFrom] = useState(todayISO(-7));
   const [dateTo, setDateTo]     = useState(todayISO(-1));
 
+  // Edição manual das vendas — vale só nessa sessão, não persiste
+  const [vendasOverride, setVendasOverride]     = useState<number | null>(null);
+  const [valorVendasOverride, setValorVendasOverride] = useState<number | null>(null);
+
   const handleGroupChange = (id: string) => {
     const g = WHATSAPP_GROUPS.find(x => x.id === id) ?? WHATSAPP_GROUPS[0];
     setGroupId(id);
     setStoreKey(g.storeKeys[0]);
     setReport({ status: 'idle' });
+    setVendasOverride(null);
+    setValorVendasOverride(null);
   };
 
   const handleStoreChange = (key: string) => {
     setStoreKey(key);
     setReport({ status: 'idle' });
+    setVendasOverride(null);
+    setValorVendasOverride(null);
   };
 
   const fetchReport = useCallback(async () => {
     const store = STORE_BY_KEY[storeKey];
     if (!store) return;
     setReport({ status: 'loading' });
+    setVendasOverride(null);
+    setValorVendasOverride(null);
     try {
-      const data = await getStoreReport(store.accountId, store.nameFilter, dateFrom, dateTo, store.excludeFilters);
-      setReport({ status: 'done', data });
+      const [data, sales] = await Promise.all([
+        getStoreReport(store.accountId, store.nameFilter, dateFrom, dateTo, store.excludeFilters),
+        store.noKommo ? Promise.resolve(null) : getStoreSales(storeKey, dateFrom, dateTo).catch(() => null),
+      ]);
+      setReport({ status: 'done', data, sales });
     } catch (err: any) {
       setReport({ status: 'error', message: err?.message ?? 'Erro desconhecido' });
     }
   }, [storeKey, dateFrom, dateTo]);
 
   const storeName = DISPLAY_NAMES[storeKey] ?? storeKey;
+  const currentStore = STORE_BY_KEY[storeKey];
+
+  // Valores efetivos: override manual tem prioridade sobre o que veio do Kommo
+  const effectiveVendas = report.status === 'done'
+    ? vendasOverride ?? report.sales?.vendas ?? 0
+    : 0;
+  const effectiveValorVendas = report.status === 'done'
+    ? valorVendasOverride ?? report.sales?.valorVendas ?? 0
+    : 0;
+  const totalSpend = report.status === 'done' ? report.data.totalSpend : 0;
+  const roas   = totalSpend > 0 ? effectiveValorVendas / totalSpend : 0;
+  const ticket = effectiveVendas > 0 ? effectiveValorVendas / effectiveVendas : 0;
 
   return (
     <div className="space-y-6">
@@ -122,7 +148,7 @@ export function ReporteiReunioesView() {
         <div className="space-y-6">
           <h2 className="text-lg font-bold text-white">{storeName}</h2>
 
-          {/* Resumo geral */}
+          {/* Resumo geral — Meta Ads */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
               <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Valor investido</p>
@@ -141,6 +167,56 @@ export function ReporteiReunioesView() {
               <p className="text-xl font-bold text-white">{fmtNumber(report.data.totalMensagens)}</p>
             </div>
           </div>
+
+          {/* Vendas / ROAS / Ticket Médio — Kommo, editável */}
+          {!currentStore?.noKommo && (
+            <div>
+              <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">Resultados de vendas (Kommo)</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-[10px] text-gray-600 uppercase font-bold">Vendas</p>
+                    <Pencil className="w-3 h-3 text-gray-600" />
+                  </div>
+                  <input
+                    type="number"
+                    value={vendasOverride ?? report.sales?.vendas ?? 0}
+                    onChange={e => setVendasOverride(Number(e.target.value))}
+                    className="w-full bg-transparent text-xl font-bold text-white focus:outline-none border-b border-transparent focus:border-brand-purple"
+                  />
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-[10px] text-gray-600 uppercase font-bold">Valor em vendas</p>
+                    <Pencil className="w-3 h-3 text-gray-600" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xl font-bold text-white">R$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={valorVendasOverride ?? report.sales?.valorVendas ?? 0}
+                      onChange={e => setValorVendasOverride(Number(e.target.value))}
+                      className="w-full bg-transparent text-xl font-bold text-white focus:outline-none border-b border-transparent focus:border-brand-purple"
+                    />
+                  </div>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">ROAS</p>
+                  <p className="text-xl font-bold text-white">{roas.toFixed(2)}</p>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Ticket Médio</p>
+                  <p className="text-xl font-bold text-white">R$ {fmtBRL(ticket)}</p>
+                </div>
+              </div>
+              {(vendasOverride !== null || valorVendasOverride !== null) && (
+                <p className="text-[10px] text-amber-400 mt-2">
+                  ✏️ Valores editados manualmente nesta sessão — não foram salvos permanentemente.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Campanhas */}
           {report.data.campaigns.length === 0 && (
