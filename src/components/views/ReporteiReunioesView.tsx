@@ -164,12 +164,10 @@ export function ReporteiReunioesView() {
                     <p className="text-white font-bold">{fmtNumber(c.impressions)}</p>
                   </div>
                   {c.tipo === 'mensagem' && (
-                    <>
-                      <div>
-                        <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Conversas</p>
-                        <p className="text-white font-bold">{fmtNumber(c.mensagens ?? 0)}</p>
-                      </div>
-                    </>
+                    <div>
+                      <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Conversas</p>
+                      <p className="text-white font-bold">{fmtNumber(c.mensagens ?? 0)}</p>
+                    </div>
                   )}
                   {c.tipo === 'seguidores' && (
                     <div>
@@ -184,6 +182,35 @@ export function ReporteiReunioesView() {
                     </div>
                   )}
                 </div>
+
+                {c.topAds && c.topAds.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-brand-light">
+                    <p className="text-[10px] text-gray-600 uppercase font-bold mb-3">Anúncios em Destaque</p>
+                    <div className="space-y-3">
+                      {c.topAds.map(ad => (
+                        <div key={ad.id} className="flex items-center gap-3 bg-brand-dark/50 rounded-lg p-3">
+                          {ad.thumbnailUrl ? (
+                            <img src={ad.thumbnailUrl} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-brand-light shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-white truncate">{ad.name}</p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-[11px] text-gray-400">
+                              <span>Alcance: <b className="text-gray-200">{fmtNumber(ad.reach)}</b></span>
+                              <span>Impressões: <b className="text-gray-200">{fmtNumber(ad.impressions)}</b></span>
+                              <span>Cliques: <b className="text-gray-200">{fmtNumber(ad.clicks)}</b></span>
+                              <span>Investido: <b className="text-gray-200">R$ {fmtBRL(ad.spend)}</b></span>
+                              {c.tipo === 'mensagem' && (
+                                <span>Conversas: <b className="text-gray-200">{fmtNumber(ad.mensagens)}</b></span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
