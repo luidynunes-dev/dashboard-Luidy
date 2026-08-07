@@ -36,9 +36,10 @@ const DISPLAY_NAMES: Record<string, string> = {
   'loungerie-ponta-negra': 'Loungerie Ponta Negra',
   'loungerie-manauara':    'Loungerie Manauara',
   'loungerie-porto-velho': 'Loungerie Porto Velho',
-  'petite-jolie-sumauma':  'Petite Jolie Sumaúma',
-  'petite-jolie-manauara': 'Petite Jolie Manauara',
-  'petite-jolie-belem':    'Petite Jolie Belém',
+  'petite-jolie-sumauma':   'Petite Jolie Sumaúma',
+  'petite-jolie-manauara':  'Petite Jolie Manauara',
+  'petite-jolie-belem':     'Petite Jolie Pátio Belém',
+  'petite-jolie-boulevard': 'Petite Jolie Boulevard',
   'ferracini-manauara-gesta': 'Ferracini Manauara',
   'ferracini-belem-gesta':    'Ferracini Belém',
   'ferracini-amazonas-gesta': 'Ferracini Amazonas',
@@ -70,8 +71,10 @@ const WHATSAPP_GROUPS: { id: string; name: string; storeKeys: string[] }[] = [
     storeKeys: ['loungerie-porto-velho','loungerie-ponta-negra','loungerie-manauara'] },
   { id: 'g-nacao', name: 'Nação RB',
     storeKeys: ['nacao-via-norte','nacao-ponta-negra','nacao-rio-branco','nacao-manaus','nacao-boa-vista','nacao-porto-velho'] },
-  { id: 'g-petite', name: 'Petite Jolie Sumaúma, Manauara e Belém',
-    storeKeys: ['petite-jolie-sumauma','petite-jolie-manauara','petite-jolie-belem'] },
+  { id: 'g-petite-sumauma-manauara', name: 'Petite Jolie Sumaúma e Manauara',
+    storeKeys: ['petite-jolie-sumauma','petite-jolie-manauara'] },
+  { id: 'g-petite-boulevard-patio', name: 'Petite Jolie Boulevard e Pátio Belém',
+    storeKeys: ['petite-jolie-boulevard','petite-jolie-belem'] },
   { id: 'g-picc-belem', name: 'Piccadilly Pátio Belém, Boulevard Belém, Parque Belém',
     storeKeys: ['piccadilly-patio-belem','piccadilly-boulevard-belem','piccadilly-parque-belem'] },
   { id: 'g-picc-bv-rb', name: 'Piccadilly Boa Vista | Rio Branco',
@@ -424,7 +427,7 @@ export function MetaFeedbackView() {
             const errors  = storeStates.filter(s => s.state?.status === 'error');
 
             const message = loaded.length > 0
-              ? buildHeader(effectiveFrom, effectiveTo) +
+              ? buildHeader(effectiveFrom, effectiveTo) + '\n' +
                 loaded.map(s => buildStoreBlock(s.name, s.state, STORE_BY_KEY[s.key]?.noKommo)).join('\n')
               : '';
 
@@ -483,7 +486,7 @@ export function MetaFeedbackView() {
           {ALL_STORES.map(({ key, name }) => {
             const state = states[key];
             const message = (state.status === 'done' || state.status === 'empty')
-              ? buildHeader(effectiveFrom, effectiveTo) + buildStoreBlock(name, state, STORE_BY_KEY[key]?.noKommo)
+              ? buildHeader(effectiveFrom, effectiveTo) + '\n' + buildStoreBlock(name, state, STORE_BY_KEY[key]?.noKommo)
               : '';
 
             return (
