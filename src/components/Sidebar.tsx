@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, LayoutDashboard, BarChart2, ChevronDown, ChevronRight, Home, LogOut, MessageSquare, Zap, Crown, PlusCircle, Send, Users, Wifi, Wallet } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, BarChart2, ChevronDown, ChevronRight, Home, LogOut, MessageSquare, Zap, Crown, PlusCircle, Send, Users, Wifi, Wallet, FileBarChart } from 'lucide-react';
 import { GroupData } from '../types';
 import { ActiveView } from '../App';
 
@@ -204,6 +204,18 @@ export function Sidebar({
               >
                 <Send className="w-4 h-4 shrink-0" />
                 <span className="text-sm font-bold">Feedbacks Meta</span>
+              </button>
+
+              <button
+                onClick={() => onViewChange({ type: 'reportei-reunioes' })}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all text-left cursor-pointer ${
+                  activeView.type === 'reportei-reunioes'
+                    ? 'bg-brand-light text-white border-l-2 border-brand-purple'
+                    : 'text-gray-400 hover:bg-brand-light/50 hover:text-white'
+                }`}
+              >
+                <FileBarChart className="w-4 h-4 shrink-0" />
+                <span className="text-sm font-bold">Reportei Reuniões</span>
               </button>
             </div>
           </div>
