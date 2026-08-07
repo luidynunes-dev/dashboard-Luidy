@@ -46,7 +46,6 @@ const DISPLAY_NAMES: Record<string, string> = {
   // Clientes Avulsos
   'usaflex-araxa':       'Usaflex Araxá',
   'via-orlandia':        'Via Orlândia',
-  'brothers-shoes':      'Brothers Shoes',
   'usaflex-patos-minas': 'Usaflex Patos de Minas',
   'fetiche-love-shop':   'Fetiche Love Shop',
   'swarovski-maringa':   'Swarovski Maringá Park',
@@ -82,7 +81,6 @@ const WHATSAPP_GROUPS: { id: string; name: string; storeKeys: string[] }[] = [
   { id: 'g-picc-am', name: 'Piccadilly Amazonas, Manauara e Ponta Negra',
     storeKeys: ['piccadilly-amazonas','piccadilly-manauara','piccadilly-ponta-negra'] },
   { id: 'g-shoes-off', name: 'Shoes Off', storeKeys: ['shoes-off'] },
-  { id: 'g-brothers', name: 'Brothers Shoes', storeKeys: ['brothers-shoes'] },
   { id: 'g-fetiche', name: 'Fetiche Love', storeKeys: ['fetiche-love-shop'] },
   { id: 'g-re', name: 'Rê Calçados', storeKeys: ['re-calcados'] },
   { id: 'g-santa-lolla', name: 'Santa Lolla Santo Antão', storeKeys: ['santa-lolla'] },
