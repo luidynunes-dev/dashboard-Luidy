@@ -302,3 +302,116 @@ export async function debugAccountFunding(adAccountId: string): Promise<any> {
   const url = `${BASE}/${adAccountId}?fields=${fields}&access_token=${TOKEN}`;
   return apiFetch(url);
 }
+
+// ─── Relatório individual por loja (Reportei Reuniões) ──────────────────────
+
+export interface ReportCampaign {
+  id: string;
+  name: string;
+  tipo: 'mensagem' | 'seguidores' | 'live' | 'engajamento' | 'leads' | 'outro';
+  spend: number;
+  reach: number;
+  impressions: number;
+  mensagens?: number;
+  custoMensagem?: number;
+  visitasPerfil?: number;
+  custoVisita?: number;
+  thruPlays?: number;
+  custoThruPlay?: number;
+  engajamentos?: number;
+  custoEngajamento?: number;
+  leads?: number;
+  custoLead?: number;
+}
+
+export interface StoreReport {
+  totalSpend: number;
+  totalReach: number;
+  totalImpressions: number;
+  totalMensagens: number;
+  campaigns: ReportCampaign[];
+}
+
+export async function getStoreReport(
+  adAccountId: string,
+  nameFilter?: string,
+  since?: string,
+  until?: string,
+  excludeFilters?: string[],
+): Promise<StoreReport> {
+  const insFields = 'spend,reach,impressions,clicks,actions,cost_per_action_type,video_thruplay_watched_actions,date_start,date_stop';
+  const timeRange = since && until
+    ? `insights.time_range({"since":"${since}","until":"${until}"}){${insFields}}`
+    : `insights.date_preset(last_7d){${insFields}}`;
+  const fields = `id,name,objective,effective_status,${timeRange}`;
+  const url = `${BASE}/${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&limit=50&access_token=${TOKEN}`;
+  const json = await apiFetch(url);
+
+  let candidates: any[] = json.data ?? [];
+
+  if (nameFilter) {
+    const kw = nameFilter.toUpperCase();
+    candidates = candidates.filter((c: any) => (c.name ?? '').toUpperCase().includes(kw));
+  }
+  if (excludeFilters && excludeFilters.length > 0) {
+    const kws = excludeFilters.map(k => k.toUpperCase());
+    candidates = candidates.filter((c: any) => {
+      const n = (c.name ?? '').toUpperCase();
+      return !kws.some(kw => n.includes(kw));
+    });
+  }
+
+  // Campanhas com veiculação no período (mesmo padrão do feedback de sexta)
+  const active = candidates.filter(
+    (c: any) => parseFloat(c.insights?.data?.[0]?.spend ?? '0') > 0,
+  );
+
+  let totalSpend = 0, totalReach = 0, totalImpressions = 0, totalMensagens = 0;
+  const campaigns: ReportCampaign[] = [];
+
+  for (const c of active) {
+    const ins          = c.insights?.data?.[0];
+    const spend        = parseFloat(ins?.spend ?? '0');
+    const reach        = parseInt(ins?.reach ?? '0', 10);
+    const impressions  = parseInt(ins?.impressions ?? '0', 10);
+    const mensagens    = action(ins?.actions, 'onsite_conversion.messaging_conversation_started_7d');
+    const nameLower    = (c.name ?? '').toLowerCase();
+
+    const thruPlays    = firstValue(ins?.video_thruplay_watched_actions);
+    const engajamentos = action(ins?.actions, 'post_engagement');
+    const leads        = actionsContaining(ins?.actions, 'lead');
+    const visitasPerfil =
+      action(ins?.actions, 'visit_instagram_profile') ||
+      action(ins?.actions, 'link_click')              ||
+      parseInt(ins?.clicks ?? '0', 10);
+
+    totalSpend       += spend;
+    totalReach        += reach;
+    totalImpressions  += impressions;
+    totalMensagens    += mensagens;
+
+    const nameHasLive     = nameLower.includes('live');
+    const nameHasLeads    = nameLower.includes('[leads]') || nameLower.includes('[site]');
+    const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]') || nameLower.includes('engagement');
+    const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
+    const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
+
+    const base = { id: c.id, name: c.name, spend, reach, impressions };
+
+    if (nameHasLive) {
+      campaigns.push({ ...base, tipo: 'live', thruPlays, custoThruPlay: thruPlays > 0 ? spend / thruPlays : 0 });
+    } else if (nameHasLeads) {
+      campaigns.push({ ...base, tipo: 'leads', leads, custoLead: leads > 0 ? spend / leads : 0 });
+    } else if (nameHasEngaj) {
+      campaigns.push({ ...base, tipo: 'engajamento', engajamentos, custoEngajamento: engajamentos > 0 ? spend / engajamentos : 0 });
+    } else if (nameHasMensagem || (!nameHasPerfil && mensagens > 0)) {
+      campaigns.push({ ...base, tipo: 'mensagem', mensagens, custoMensagem: mensagens > 0 ? spend / mensagens : 0 });
+    } else if (nameHasPerfil || visitasPerfil > 0) {
+      campaigns.push({ ...base, tipo: 'seguidores', visitasPerfil, custoVisita: visitasPerfil > 0 ? spend / visitasPerfil : 0 });
+    } else {
+      campaigns.push({ ...base, tipo: 'outro' });
+    }
+  }
+
+  return { totalSpend, totalReach, totalImpressions, totalMensagens, campaigns };
+}
