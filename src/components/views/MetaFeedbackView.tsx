@@ -302,6 +302,23 @@ export function MetaFeedbackView() {
     setRunning(false);
   }, [setStore, effectiveFrom, effectiveTo]);
 
+  // Busca só UMA loja — usado pelo botão de refresh individual em "Por loja"
+  const fetchOne = useCallback(async (key: string) => {
+    const store = STORE_BY_KEY[key];
+    if (!store) return;
+
+    setStore(key, { status: 'loading' });
+    try {
+      const [data, sales] = await Promise.all([
+        getAccountFeedbackData(store.accountId, store.nameFilter, effectiveFrom, effectiveTo, store.excludeFilters),
+        store.noKommo ? Promise.resolve(null) : getStoreSales(key, effectiveFrom, effectiveTo).catch(() => null),
+      ]);
+      setStore(key, data ? { status: 'done', data, sales } : { status: 'empty', sales });
+    } catch (err: any) {
+      setStore(key, { status: 'error', message: err?.message ?? 'Erro desconhecido' });
+    }
+  }, [setStore, effectiveFrom, effectiveTo]);
+
   const copyText = (key: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(prev => ({ ...prev, [key]: true }));
@@ -494,17 +511,27 @@ export function MetaFeedbackView() {
                     <MessageSquare className="w-4 h-4 text-brand-purple shrink-0" />
                     <span className="text-sm font-bold text-white">{name}</span>
                   </div>
-                  {message && (
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
-                      onClick={() => copyText(key, message)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-light hover:bg-brand-light/80 text-xs font-bold transition-all"
+                      onClick={() => fetchOne(key)}
+                      disabled={state.status === 'loading'}
+                      title="Gerar feedback só desta loja"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-light hover:bg-brand-light/80 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold transition-all"
                     >
-                      {copied[key]
-                        ? <><Check className="w-3.5 h-3.5 text-green-400" /><span className="text-green-400">Copiado!</span></>
-                        : <><Copy className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-300">Copiar</span></>
-                      }
+                      <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${state.status === 'loading' ? 'animate-spin' : ''}`} />
                     </button>
-                  )}
+                    {message && (
+                      <button
+                        onClick={() => copyText(key, message)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-brand-light hover:bg-brand-light/80 text-xs font-bold transition-all"
+                      >
+                        {copied[key]
+                          ? <><Check className="w-3.5 h-3.5 text-green-400" /><span className="text-green-400">Copiado!</span></>
+                          : <><Copy className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-300">Copiar</span></>
+                        }
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {state.status === 'idle' && (
