@@ -1,9 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw, Pencil } from 'lucide-react';
+import { RefreshCw, Pencil, Eye, EyeOff } from 'lucide-react';
 import { getStoreReport, StoreReport } from '../../services/metaService';
 import { getStoreSales, KommoSales } from '../../services/kommoService';
 import { WHATSAPP_GROUPS, DISPLAY_NAMES, STORE_BY_KEY } from '../../config/storeGroups';
 import { DateRangePicker } from '../DateRangePicker';
+
+interface Props {
+  presentationMode: boolean;
+  onTogglePresentationMode: () => void;
+}
 
 type ReportState =
   | { status: 'idle' }
@@ -27,7 +32,7 @@ function todayISO(offsetDays = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function ReporteiReunioesView() {
+export function ReporteiReunioesView({ presentationMode, onTogglePresentationMode }: Props) {
   const [groupId, setGroupId]   = useState(WHATSAPP_GROUPS[0].id);
   const group = WHATSAPP_GROUPS.find(g => g.id === groupId) ?? WHATSAPP_GROUPS[0];
 
@@ -90,9 +95,19 @@ export function ReporteiReunioesView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Reportei Reuniões</h1>
-        <p className="text-sm text-gray-500 mt-1">Painel individual por loja, para apresentar em reunião.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Reportei Reuniões</h1>
+          <p className="text-sm text-gray-500 mt-1">Painel individual por loja, para apresentar em reunião.</p>
+        </div>
+        <button
+          onClick={onTogglePresentationMode}
+          title={presentationMode ? 'Mostrar menu' : 'Ocultar menu (útil antes de salvar em PDF)'}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-light hover:bg-brand-light/80 text-xs font-bold text-gray-300 hover:text-white transition-all shrink-0"
+        >
+          {presentationMode ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+          {presentationMode ? 'Mostrar menu' : 'Ocultar menu'}
+        </button>
       </div>
 
       {/* Seletor de grupo */}
