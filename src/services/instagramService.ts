@@ -23,6 +23,7 @@ export async function getInstagramSummary(
   const profile = await apiFetch(
     `${BASE}/${igId}?fields=username,followers_count&access_token=${TOKEN}`
   );
+  console.log('[INSTAGRAM] perfil:', profile);
 
   let profileViews = 0;
   let followerVariation = 0;
@@ -31,14 +32,14 @@ export async function getInstagramSummary(
     const insights = await apiFetch(
       `${BASE}/${igId}/insights?metric=profile_views,follower_count&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${TOKEN}`
     );
+    console.log('[INSTAGRAM] insights:', insights);
     for (const item of insights.data ?? []) {
       const total = item.total_value?.value ?? 0;
       if (item.name === 'profile_views')  profileViews = total;
       if (item.name === 'follower_count') followerVariation = total;
     }
-  } catch {
-    // Segue sem esses dois campos se a API rejeitar — parâmetros do Instagram Insights
-    // mudam com frequência; melhor mostrar o que der certo do que quebrar tudo.
+  } catch (err) {
+    console.error('[INSTAGRAM] erro nos insights:', err);
   }
 
   return {
