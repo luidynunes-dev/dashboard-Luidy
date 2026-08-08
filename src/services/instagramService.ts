@@ -28,18 +28,27 @@ export async function getInstagramSummary(
   let profileViews = 0;
   let followerVariation = 0;
 
+  // profile_views aceita metric_type=total_value
   try {
-    const insights = await apiFetch(
-      `${BASE}/${igId}/insights?metric=profile_views,follower_count&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${TOKEN}`
+    const viewsRes = await apiFetch(
+      `${BASE}/${igId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${TOKEN}`
     );
-    console.log('[INSTAGRAM] insights:', insights);
-    for (const item of insights.data ?? []) {
-      const total = item.total_value?.value ?? 0;
-      if (item.name === 'profile_views')  profileViews = total;
-      if (item.name === 'follower_count') followerVariation = total;
-    }
+    console.log('[INSTAGRAM] profile_views:', viewsRes);
+    profileViews = viewsRes.data?.[0]?.total_value?.value ?? 0;
   } catch (err) {
-    console.error('[INSTAGRAM] erro nos insights:', err);
+    console.error('[INSTAGRAM] erro em profile_views:', err);
+  }
+
+  // follower_count NÃO aceita metric_type=total_value — vem como série diária, soma-se os valores
+  try {
+    const followersRes = await apiFetch(
+      `${BASE}/${igId}/insights?metric=follower_count&period=day&since=${since}&until=${until}&access_token=${TOKEN}`
+    );
+    console.log('[INSTAGRAM] follower_count:', followersRes);
+    const values = followersRes.data?.[0]?.values ?? [];
+    followerVariation = values.reduce((sum: number, v: any) => sum + (v.value ?? 0), 0);
+  } catch (err) {
+    console.error('[INSTAGRAM] erro em follower_count:', err);
   }
 
   return {
