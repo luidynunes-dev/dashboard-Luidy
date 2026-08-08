@@ -61,6 +61,9 @@ export default function App() {
     return (localStorage.getItem('aure_theme') as 'dark' | 'light') ?? 'dark';
   });
 
+  // Esconde o menu lateral e o rodapé mobile — usado no "Reportei Reuniões" antes de salvar em PDF
+  const [presentationMode, setPresentationMode] = useState(false);
+
   const { groups, seeded } = useGroups();
 
   useEffect(() => {
@@ -168,6 +171,13 @@ export default function App() {
     }
   }, [isMaster, isStaff, activeView.type]);
 
+  // Sai do modo apresentação sempre que trocar de tela — evita ficar "preso" sem menu em outra área
+  useEffect(() => {
+    if (activeView.type !== 'reportei-reunioes' && presentationMode) {
+      setPresentationMode(false);
+    }
+  }, [activeView.type, presentationMode]);
+
   // ── Firebase verificando sessão ───────────────────────────────────────────
   if (authLoading) {
     return (
@@ -220,50 +230,54 @@ export default function App() {
 
   return (
     <div className={`flex min-h-screen bg-brand-dark text-white ${theme}`}>
-      <div className="hidden lg:block">
-        <Sidebar
-          groups={visibleGroups}
-          activeGroupId={activeGroupId}
-          activeView={activeView}
-          isMaster={isMaster}
-          isStaff={isStaff}
-          onGroupChange={handleGroupChange}
-          onViewChange={handleViewChange}
-          onLogout={handleLogout}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-        />
-      </div>
+      {!presentationMode && (
+        <div className="hidden lg:block">
+          <Sidebar
+            groups={visibleGroups}
+            activeGroupId={activeGroupId}
+            activeView={activeView}
+            isMaster={isMaster}
+            isStaff={isStaff}
+            onGroupChange={handleGroupChange}
+            onViewChange={handleViewChange}
+            onLogout={handleLogout}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </div>
+      )}
 
-      <main className="flex-1 lg:ml-72 pb-24 lg:pb-0 min-h-screen">
-        <header className="lg:hidden sticky top-0 z-40 bg-brand-medium/95 backdrop-blur border-b border-brand-light px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: activeGroup.color }} />
-            <span className="text-xs font-bold text-brand-purple">Aure Digital</span>
-            {activeView.type !== 'home' && (
-              <><span className="text-gray-700 text-xs">/</span><span className="text-xs text-gray-500">{activeGroup.name}</span></>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="p-1 rounded-lg bg-brand-light border border-white/5 text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
-            >
-              {theme === 'dark' ? (
-                <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                </svg>
-              ) : (
-                <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
+      <main className={`flex-1 ${presentationMode ? '' : 'lg:ml-72'} pb-24 lg:pb-0 min-h-screen`}>
+        {!presentationMode && (
+          <header className="lg:hidden sticky top-0 z-40 bg-brand-medium/95 backdrop-blur border-b border-brand-light px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: activeGroup.color }} />
+              <span className="text-xs font-bold text-brand-purple">Aure Digital</span>
+              {activeView.type !== 'home' && (
+                <><span className="text-gray-700 text-xs">/</span><span className="text-xs text-gray-500">{activeGroup.name}</span></>
               )}
-            </button>
-            <span className="text-[10px] text-gray-650 bg-brand-light px-2 py-1 rounded border border-brand-light truncate max-w-[120px]">
-              {pageLabel}
-            </span>
-          </div>
-        </header>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-1 rounded-lg bg-brand-light border border-white/5 text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center shrink-0"
+              >
+                {theme === 'dark' ? (
+                  <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                )}
+              </button>
+              <span className="text-[10px] text-gray-650 bg-brand-light px-2 py-1 rounded border border-brand-light truncate max-w-[120px]">
+                {pageLabel}
+              </span>
+            </div>
+          </header>
+        )}
 
         <div className="px-4 py-6 lg:p-10">
           <AnimatePresence mode="wait">
@@ -299,7 +313,10 @@ export default function App() {
               )}
 
               {(isMaster || isStaff) && activeView.type === 'reportei-reunioes' && (
-                <ReporteiReunioesView />
+                <ReporteiReunioesView
+                  presentationMode={presentationMode}
+                  onTogglePresentationMode={() => setPresentationMode(p => !p)}
+                />
               )}
 
               {activeView.type === 'consolidado' && activeGroup.stores.length === 0 && <EmptyGroupView group={activeGroup} />}
@@ -325,16 +342,18 @@ export default function App() {
         </div>
       </main>
 
-      <div className="lg:hidden">
-        <BottomNav
-          groups={visibleGroups}
-          activeGroupId={activeGroupId}
-          activeView={activeView}
-          isMaster={isMaster}
-          onGroupChange={handleGroupChange}
-          onViewChange={handleViewChange}
-        />
-      </div>
+      {!presentationMode && (
+        <div className="lg:hidden">
+          <BottomNav
+            groups={visibleGroups}
+            activeGroupId={activeGroupId}
+            activeView={activeView}
+            isMaster={isMaster}
+            onGroupChange={handleGroupChange}
+            onViewChange={handleViewChange}
+          />
+        </div>
+      )}
     </div>
   );
 }
