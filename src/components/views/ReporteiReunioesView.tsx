@@ -28,6 +28,10 @@ function fmtDateBR(iso: string): string {
   const [y, m, d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
+function fmtStoryDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR');
+}
 function todayISO(offsetDays = 0): string {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -244,29 +248,6 @@ export function ReporteiReunioesView({ presentationMode, onTogglePresentationMod
             </div>
           )}
 
-          {/* Instagram */}
-          {report.instagram && (
-            <div>
-              <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">
-                Instagram {report.instagram.username ? `(@${report.instagram.username})` : ''}
-              </p>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
-                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Número de seguidores</p>
-                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followersCount)}</p>
-                </div>
-                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
-                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Visitas do perfil</p>
-                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.profileViews)}</p>
-                </div>
-                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
-                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Variação de seguidores</p>
-                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followerVariation)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Campanhas */}
           {report.data.campaigns.length === 0 && (
             <p className="text-sm text-gray-600 italic">Nenhuma campanha com veiculação nesse período.</p>
@@ -339,6 +320,56 @@ export function ReporteiReunioesView({ presentationMode, onTogglePresentationMod
               </div>
             ))}
           </div>
+
+          {/* Instagram — no final da página */}
+          {report.instagram && (
+            <div>
+              <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">
+                Instagram {report.instagram.username ? `(@${report.instagram.username})` : ''}
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Número de seguidores</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followersCount)}</p>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Visitas do perfil</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.profileViews)}</p>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Variação de seguidores</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followerVariation)}</p>
+                </div>
+              </div>
+
+              {report.instagram.stories.length > 0 ? (
+                <div className="mt-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-3">Stories ativos (últimas 24h)</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {report.instagram.stories.map(story => (
+                      <div key={story.id} className="flex gap-3 bg-brand-medium border border-brand-light rounded-xl p-3">
+                        {story.mediaUrl && (
+                          <img src={story.mediaUrl} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-gray-400">
+                          <span>Visualizações: <b className="text-gray-200">{fmtNumber(story.impressions)}</b></span>
+                          <span>Alcance: <b className="text-gray-200">{fmtNumber(story.reach)}</b></span>
+                          <span>Respostas: <b className="text-gray-200">{fmtNumber(story.replies)}</b></span>
+                          <span>Retenção: <b className="text-gray-200">{story.retention.toFixed(1)}%</b></span>
+                          <span>Avançar: <b className="text-gray-200">{fmtNumber(story.tapsForward)}</b></span>
+                          <span>Voltar: <b className="text-gray-200">{fmtNumber(story.tapsBack)}</b></span>
+                          <span>Sair: <b className="text-gray-200">{fmtNumber(story.exits)}</b></span>
+                          <span>Data: <b className="text-gray-200">{fmtStoryDate(story.timestamp)}</b></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-600 italic mt-3">Nenhum story ativo no momento (a API só retorna stories das últimas 24h).</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
