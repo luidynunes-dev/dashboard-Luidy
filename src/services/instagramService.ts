@@ -40,20 +40,28 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
     console.error('[INSTAGRAM] erro ao listar stories:', err);
     return [];
   }
-
   const items = list.data ?? [];
   console.log('[INSTAGRAM] quantidade de stories encontrados:', items.length);
   const stories: InstagramStory[] = [];
-
   for (const item of items) {
     try {
       const ins = await apiFetch(
-        `${BASE}/${item.id}/insights?metric=impressions,reach,replies,taps_forward,taps_back,exits&access_token=${TOKEN}`
+        `${BASE}/${item.id}/insights?metric=impressions,reach,replies,navigation&breakdown=story_navigation_action_type&access_token=${TOKEN}`
       );
+      console.log('[INSTAGRAM] insight bruto do story', item.id, ins); // TEMP: confirmar shape do breakdown, remover depois
+
       const get = (name: string) => ins.data?.find((m: any) => m.name === name)?.values?.[0]?.value ?? 0;
       const impressions = get('impressions');
-      const exits       = get('exits');
-      const retention    = impressions > 0 ? ((impressions - exits) / impressions) * 100 : 0;
+
+      const navMetric = ins.data?.find((m: any) => m.name === 'navigation');
+      const navResults = navMetric?.total_value?.breakdowns?.[0]?.results ?? [];
+      const navValue = (type: string) =>
+        navResults.find((r: any) => r.dimension_values?.[0] === type)?.value ?? 0;
+
+      const tapsForward = navValue('TAP_FORWARD');
+      const tapsBack     = navValue('TAP_BACK');
+      const exits        = navValue('TAP_EXIT');
+      const retention     = impressions > 0 ? ((impressions - exits) / impressions) * 100 : 0;
 
       stories.push({
         id: item.id,
@@ -62,8 +70,8 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
         impressions,
         reach: get('reach'),
         replies: get('replies'),
-        tapsForward: get('taps_forward'),
-        tapsBack: get('taps_back'),
+        tapsForward,
+        tapsBack,
         exits,
         retention,
       });
@@ -71,7 +79,6 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
       console.error('[INSTAGRAM] erro no insight de um story:', err);
     }
   }
-
   return stories;
 }
 
