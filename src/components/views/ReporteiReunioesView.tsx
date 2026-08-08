@@ -2,7 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { RefreshCw, Pencil, Eye, EyeOff } from 'lucide-react';
 import { getStoreReport, StoreReport } from '../../services/metaService';
 import { getStoreSales, KommoSales } from '../../services/kommoService';
+import { getInstagramSummary, InstagramSummary } from '../../services/instagramService';
 import { WHATSAPP_GROUPS, DISPLAY_NAMES, STORE_BY_KEY } from '../../config/storeGroups';
+import { INSTAGRAM_ACCOUNTS } from '../../config/instagramAccounts';
 import { DateRangePicker } from '../DateRangePicker';
 
 interface Props {
@@ -13,7 +15,7 @@ interface Props {
 type ReportState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'done'; data: StoreReport; sales: KommoSales | null }
+  | { status: 'done'; data: StoreReport; sales: KommoSales | null; instagram: InstagramSummary | null }
   | { status: 'error'; message: string };
 
 function fmtBRL(value: number): string {
@@ -69,11 +71,13 @@ export function ReporteiReunioesView({ presentationMode, onTogglePresentationMod
     setVendasOverride(null);
     setValorVendasOverride(null);
     try {
-      const [data, sales] = await Promise.all([
+      const igId = INSTAGRAM_ACCOUNTS[storeKey];
+      const [data, sales, instagram] = await Promise.all([
         getStoreReport(store.accountId, store.nameFilter, dateFrom, dateTo, store.excludeFilters),
         store.noKommo ? Promise.resolve(null) : getStoreSales(storeKey, dateFrom, dateTo).catch(() => null),
+        igId ? getInstagramSummary(igId, dateFrom, dateTo).catch(() => null) : Promise.resolve(null),
       ]);
-      setReport({ status: 'done', data, sales });
+      setReport({ status: 'done', data, sales, instagram });
     } catch (err: any) {
       setReport({ status: 'error', message: err?.message ?? 'Erro desconhecido' });
     }
@@ -237,6 +241,29 @@ export function ReporteiReunioesView({ presentationMode, onTogglePresentationMod
                   ✏️ Valores editados manualmente nesta sessão — não foram salvos permanentemente.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Instagram */}
+          {report.instagram && (
+            <div>
+              <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">
+                Instagram {report.instagram.username ? `(@${report.instagram.username})` : ''}
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Número de seguidores</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followersCount)}</p>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Visitas do perfil</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.profileViews)}</p>
+                </div>
+                <div className="bg-brand-medium border border-brand-light rounded-xl p-4">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-1">Variação de seguidores</p>
+                  <p className="text-xl font-bold text-white">{fmtNumber(report.instagram.followerVariation)}</p>
+                </div>
+              </div>
             </div>
           )}
 
