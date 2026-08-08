@@ -35,12 +35,14 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
     list = await apiFetch(
       `${BASE}/${igId}/stories?fields=id,media_url,timestamp&access_token=${TOKEN}`
     );
+    console.log('[INSTAGRAM] lista de stories (bruta):', list);
   } catch (err) {
     console.error('[INSTAGRAM] erro ao listar stories:', err);
     return [];
   }
 
   const items = list.data ?? [];
+  console.log('[INSTAGRAM] quantidade de stories encontrados:', items.length);
   const stories: InstagramStory[] = [];
 
   for (const item of items) {
@@ -67,51 +69,8 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
       });
     } catch (err) {
       console.error('[INSTAGRAM] erro no insight de um story:', err);
-      // segue pros outros stories mesmo se um falhar
     }
   }
 
   return stories;
-}
-
-export async function getInstagramSummary(
-  igId: string,
-  since: string,
-  until: string,
-): Promise<InstagramSummary> {
-  const profile = await apiFetch(
-    `${BASE}/${igId}?fields=username,followers_count&access_token=${TOKEN}`
-  );
-
-  let profileViews = 0;
-  let followerVariation = 0;
-
-  try {
-    const viewsRes = await apiFetch(
-      `${BASE}/${igId}/insights?metric=profile_views&period=day&metric_type=total_value&since=${since}&until=${until}&access_token=${TOKEN}`
-    );
-    profileViews = viewsRes.data?.[0]?.total_value?.value ?? 0;
-  } catch (err) {
-    console.error('[INSTAGRAM] erro em profile_views:', err);
-  }
-
-  try {
-    const followersRes = await apiFetch(
-      `${BASE}/${igId}/insights?metric=follower_count&period=day&since=${since}&until=${until}&access_token=${TOKEN}`
-    );
-    const values = followersRes.data?.[0]?.values ?? [];
-    followerVariation = values.reduce((sum: number, v: any) => sum + (v.value ?? 0), 0);
-  } catch (err) {
-    console.error('[INSTAGRAM] erro em follower_count:', err);
-  }
-
-  const stories = await fetchStories(igId);
-
-  return {
-    username: profile.username,
-    followersCount: parseInt(profile.followers_count ?? '0', 10),
-    profileViews,
-    followerVariation,
-    stories,
-  };
 }
