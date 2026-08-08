@@ -45,9 +45,9 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
   const stories: InstagramStory[] = [];
   for (const item of items) {
     try {
-      // Chamada 1: metrics simples, sem breakdown
+      // Chamada 1: metrics simples, sem breakdown ('impressions' foi descontinuado -> usar 'views')
       const base = await apiFetch(
-        `${BASE}/${item.id}/insights?metric=impressions,reach,replies&access_token=${TOKEN}`
+        `${BASE}/${item.id}/insights?metric=views,reach,replies&access_token=${TOKEN}`
       );
       // Chamada 2: navigation, exige breakdown, tem que ir separada
       const nav = await apiFetch(
@@ -56,7 +56,7 @@ async function fetchStories(igId: string): Promise<InstagramStory[]> {
       console.log('[INSTAGRAM] insight bruto do story', item.id, { base, nav }); // TEMP: confirmar shape do breakdown, remover depois
 
       const get = (name: string) => base.data?.find((m: any) => m.name === name)?.values?.[0]?.value ?? 0;
-      const impressions = get('impressions');
+      const impressions = get('views');
 
       const navMetric = nav.data?.find((m: any) => m.name === 'navigation');
       const navResults = navMetric?.total_value?.breakdowns?.[0]?.results ?? [];
