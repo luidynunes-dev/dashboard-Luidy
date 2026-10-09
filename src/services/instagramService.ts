@@ -1,5 +1,5 @@
 const BASE  = 'https://graph.facebook.com/v21.0';
-const TOKEN = import.meta.env.VITE_META_ACCESS_TOKEN as string;
+const TOKEN = ''; // o token agora fica no servidor (api/meta.ts)
 
 export interface InstagramStory {
   id: string;
@@ -23,9 +23,13 @@ export interface InstagramSummary {
 }
 
 async function apiFetch(url: string) {
-  const res = await fetch(url);
+  const u = new URL(url);
+  const qs = new URLSearchParams(u.search);
+  qs.delete('access_token');
+  qs.set('path', u.pathname.replace(/^\/v\d+\.\d+/, ''));
+  const res = await fetch(`/api/meta?${qs.toString()}`);
   const json = await res.json();
-  if (json.error) throw new Error(json.error.message);
+  if (json.error) throw new Error(json.error.message ?? json.error);
   return json;
 }
 
