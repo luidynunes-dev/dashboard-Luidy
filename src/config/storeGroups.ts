@@ -56,7 +56,6 @@ export const DISPLAY_NAMES: Record<string, string> = {
   'ferracini-amazonas-gesta': 'Ferracini Amazonas',
   // Clientes Avulsos
   'usaflex-araxa':       'Usaflex Araxá',
-  'via-orlandia':        'Via Orlândia',
   'usaflex-patos-minas': 'Usaflex Patos de Minas',
   'fetiche-love-shop':   'Fetiche Love Shop',
   'swarovski-maringa':   'Swarovski Maringá Park',
@@ -100,7 +99,6 @@ export const WHATSAPP_GROUPS: WhatsappGroup[] = [
   { id: 'g-usaflex-cascavel', name: 'Usaflex Cascavel', storeKeys: ['usaflex-cascavel'] },
   { id: 'g-usaflex-patos', name: 'Usaflex Patos de Minas', storeKeys: ['usaflex-patos-minas'] },
   { id: 'g-usaflex-savassi', name: 'Usaflex Savassi', storeKeys: ['usaflex-savassi'] },
-  { id: 'g-via-orlandia', name: 'Via Orlândia Calçados', storeKeys: ['via-orlandia'] },
 ];
 
 // Contas compartilhadas por mais de uma loja: cada loja filtra por keyword no nome de campanha.
