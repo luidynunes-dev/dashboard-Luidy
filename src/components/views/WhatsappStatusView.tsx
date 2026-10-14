@@ -39,7 +39,6 @@ const DISPLAY_NAMES: Record<string, string> = {
   'ferracini-belem-gesta':    'Ferracini Belém',
   'ferracini-amazonas-gesta': 'Ferracini Amazonas',
   'usaflex-araxa':       'Usaflex Araxá',
-  'via-orlandia':        'Via Orlândia',
   'brothers-shoes':      'Brothers Shoes',
   'usaflex-patos-minas': 'Usaflex Patos de Minas',
   'fetiche-love-shop':   'Fetiche Love Shop',
@@ -51,9 +50,13 @@ const DISPLAY_NAMES: Record<string, string> = {
   'usaflex-cascavel':    'Usaflex Cascavel',
 };
 
+// Operações que NÃO usam Kommo: não há conexão para monitorar, então ficam fora da verificação
+const NO_KOMMO_KEYS = ['usaflex-araxa', 'fetiche-love-shop', 'adidas-kids'];
+const NO_KOMMO_NAMES = NO_KOMMO_KEYS.map(key => DISPLAY_NAMES[key] ?? key).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
 // Todas as lojas com Kommo (as chaves do META_ACCOUNTS que têm conta no Kommo)
 const STORES = Object.keys(META_ACCOUNTS)
-  .filter(key => DISPLAY_NAMES[key])
+  .filter(key => DISPLAY_NAMES[key] && !NO_KOMMO_KEYS.includes(key))
   .map(key => ({ key, name: DISPLAY_NAMES[key] }))
   .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
@@ -125,7 +128,14 @@ export function WhatsappStatusView() {
         Baseado na última conversa registrada no Kommo: ✅ até 24h · ⚠️ 24–48h · 🔴 mais de 48h sem atividade (provável WhatsApp desconectado).
       </p>
 
-      {checked && !running && (
+      <div className="bg-yellow-950/30 border border-yellow-900/60 rounded-xl px-4 py-3">
+<p className="text-yellow-400 text-xs font-bold">⚠️ Operações sem Kommo (não monitoradas aqui)</p>
+<p className="text-gray-400 text-[11px] mt-1">
+{NO_KOMMO_NAMES.join(' · ')}. Não há conexão para verificar, então elas não entram na lista abaixo nem nas contagens.
+</p>
+</div>
+
+{checked && !running && (
         <div className="flex gap-4 text-xs">
           {badCount > 0 && <span className="text-red-400 font-bold">🔴 {badCount} provável desconexão</span>}
           {warnCount > 0 && <span className="text-yellow-400 font-bold">⚠️ {warnCount} atenção</span>}
