@@ -40,7 +40,6 @@ const DISPLAY_NAMES: Record<string, string> = {
   'ferracini-belem-gesta':    'Ferracini Belém',
   'ferracini-amazonas-gesta': 'Ferracini Amazonas',
   'usaflex-araxa':       'Usaflex Araxá',
-  'via-orlandia':        'Via Orlândia',
   'brothers-shoes':      'Brothers Shoes',
   'usaflex-patos-minas': 'Usaflex Patos de Minas',
   'fetiche-love-shop':   'Fetiche Love Shop',
