@@ -41,6 +41,5 @@ export const INSTAGRAM_ACCOUNTS: Record<string, string> = {
   'fetiche-love-shop':   '17841431983167299',
   'usaflex-savassi':     '17841400350838232',
   're-calcados':         '17841456599200333',
-  'via-orlandia':        '17841403896705295',
   'usaflex-araxa':       '17841465120863140',
 };
