@@ -11,7 +11,6 @@ export const AVULSOS: GroupData = {
   fee: 1500,
   stores: [
     { id: 'usaflex-araxa',        name: 'Usaflex Araxá',           color: '#0ea5e9', fee: 1697, historico: [], planos: [] },
-    { id: 'via-orlandia',         name: 'Via Orlândia',            color: '#0ea5e9', fee: 1500, historico: [], planos: [] },
     { id: 'usaflex-patos-minas',  name: 'Usaflex Patos de Minas',  color: '#0ea5e9', fee: 1440, historico: [], planos: [] },
     { id: 'fetiche-love-shop',    name: 'Fetiche Love Shop',       color: '#0ea5e9', fee: 1440, historico: [], planos: [] },
     { id: 'swarovski-maringa',    name: 'Swarovski Maringá',       color: '#0ea5e9', fee: 1674, historico: [], planos: [] },
