@@ -14,7 +14,7 @@ export const ACCESS_CONFIG: Record<string, {
   nome: string;
 }> = {
   // ── Luidy e Gabryel (acesso total + IA + saudação) ────────────────────────
-  'luidygabryel': {
+  'luidyryan': {
     groupIds: 'all',
     isMaster: true,
     isStaff:  false,
