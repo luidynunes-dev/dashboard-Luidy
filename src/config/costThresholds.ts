@@ -20,9 +20,10 @@ interface KindConfig {
 }
 
 export const THRESHOLDS: Record<CampaignKind, KindConfig> = {
-  // Definido pelo Luidy: até R$ 3 bom, acima de R$ 6 caro.
+  // Definido pelo Luidy em 30/10/26: até R$ 3,50 bom (verde), de R$ 3,51 a R$ 5,99 alto (amarelo),
+  // a partir de R$ 6,00 caro (vermelho). Vale para todas as operações, exceto Swarovski.
   whatsapp: {
-    padrao: { ideal: 3, caro: 6 },
+    padrao: { ideal: 3.5, caro: 5.99 },
     porLoja: {
       // Swarovski (ticket alto) — aprovado pelo Luidy em 30/10/26, com base na DRE 2026:
       // margem de contribuição de 45% sobre ticket de ~R$ 1.700–1.840, conversão de 7–12% e
