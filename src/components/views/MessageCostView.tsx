@@ -297,7 +297,7 @@ export function MessageCostView() {
       </div>
 
       {tab !== 'criticas' && <p className="text-xs text-gray-600">
-        ✅ até R$ {fmtBRL(padrao.ideal)} · ⚠️ de R$ {fmtBRL(padrao.ideal + 0.01)} a R$ {fmtBRL(padrao.caro)} · 🔴 acima de R$ {fmtBRL(padrao.caro)} ou investimento sem resultado · ⚪ sem campanha de {kindInfo.label} no período
+        ✅ até R$ {fmtBRL(padrao.ideal)} · ⚠️ de R$ {fmtBRL(padrao.ideal + 0.01)} a R$ {fmtBRL(padrao.caro)} · 🔴 a partir de R$ {fmtBRL(padrao.caro + 0.01)} ou investimento sem resultado · ⚪ sem campanha de {kindInfo.label} no período
         <br />Algumas lojas têm régua própria (passe o mouse no valor para ver).
       </p>}
 
