@@ -213,7 +213,9 @@ export async function getAccountFeedbackData(
 
     // Classificação por nome de campanha (prioridade sobre objetivo)
     const nameHasLive     = nameLower.includes('live');
-    const nameHasLeads    = nameLower.includes('[leads]') || nameLower.includes('[site]');
+    // Campanha com tag LEADS/SITE mas que só gera mensagens (leads de WhatsApp, sem lead no site) é tratada como mensagem
+    const nameHasLeads    = (nameLower.includes('[leads]') || nameLower.includes('[site]'))
+                         && !(leads === 0 && mensagens > 0);
     const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]')
                          || nameLower.includes('engagement');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
@@ -443,7 +445,9 @@ export async function getStoreReport(
     const topAds = await fetchTopAds(c.id, since, until);
 
     const nameHasLive     = nameLower.includes('live');
-    const nameHasLeads    = nameLower.includes('[leads]') || nameLower.includes('[site]');
+    // Campanha com tag LEADS/SITE mas que só gera mensagens (leads de WhatsApp, sem lead no site) é tratada como mensagem
+    const nameHasLeads    = (nameLower.includes('[leads]') || nameLower.includes('[site]'))
+                         && !(leads === 0 && mensagens > 0);
     const nameHasEngaj    = nameLower.includes('[post]') || nameLower.includes('[eng]') || nameLower.includes('engagement');
     const nameHasMensagem = nameLower.includes('msg') || nameLower.includes('whatsapp') || nameLower.includes('message');
     const nameHasPerfil   = nameLower.includes('[ig]') || nameLower.includes('perfil') || nameLower.includes('trafego') || nameLower.includes('tráfego') || nameLower.includes('seguidores');
