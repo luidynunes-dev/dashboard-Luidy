@@ -22,6 +22,7 @@ import { useGroups }       from './hooks/useGroups';
 import { useAuth, profileToAccessState } from './hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
 import { AccountBalanceView } from './components/views/AccountBalanceView';
+import { MessageCostView } from './components/views/MessageCostView';
 import { ReporteiReunioesView } from './components/views/ReporteiReunioesView';
 
 export type ActiveView =
@@ -34,6 +35,7 @@ export type ActiveView =
   | { type: 'data-entry' }
   | { type: 'whatsapp-status' }
   | { type: 'account-balance' }
+  | { type: 'message-cost' }
   | { type: 'meta-ads' }
   | { type: 'meta-feedback' }
   | { type: 'reportei-reunioes' }
@@ -154,6 +156,7 @@ export default function App() {
     : activeView.type === 'data-entry'  ? 'Lançar Resultado'
     : activeView.type === 'whatsapp-status' ? 'Conexão WhatsApp'
     : activeView.type === 'account-balance' ? 'Saldo das Contas'
+    : activeView.type === 'message-cost' ? 'Custo por Mensagem'
     : activeView.type === 'meta-ads'    ? 'Meta Ads'
     : activeView.type === 'meta-feedback' ? 'Feedbacks Meta'
     : activeView.type === 'reportei-reunioes' ? 'Reportei Reuniões'
@@ -302,6 +305,9 @@ export default function App() {
               )}
               {(isMaster || isStaff) && activeView.type === 'account-balance' && (
                 <AccountBalanceView />
+              )}
+              {(isMaster || isStaff) && activeView.type === 'message-cost' && (
+                <MessageCostView />
               )}
 
               {(isMaster || isStaff) && activeView.type === 'data-entry' && (
