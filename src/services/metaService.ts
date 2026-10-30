@@ -51,6 +51,13 @@ function actionsContaining(actions: { action_type: string; value: string }[] | u
     .reduce((sum, a) => sum + parseFloat(a.value ?? '0'), 0);
 }
 
+// Lê o resultado "visitas ao perfil do Instagram" do campo results da Meta, se a campanha for otimizada para isso.
+function profileVisitResult(results: { indicator: string; values?: { value: string }[] }[] | undefined): number | undefined {
+  const r = results?.find(x => x.indicator === 'profile_visit_view');
+  const v = r?.values?.[0]?.value;
+  return v !== undefined ? parseFloat(v) : undefined;
+}
+
 async function apiFetch(url: string) {
   const u = new URL(url);
   const qs = new URLSearchParams(u.search);
@@ -133,6 +140,9 @@ export interface CampaignFeedback {
   custoMensagem?: number;
   visitasPerfil?: number;
   custoVisita?: number;
+  // Visitas ao perfil como o Gerenciador conta (campo "results", indicador profile_visit_view).
+  // Só existe em campanhas otimizadas para visita ao perfil. Usado pela tela Custo por Mensagem.
+  visitasPerfilMeta?: number;
   thruPlays?: number;
   custoThruPlay?: number;
   engajamentos?: number;
@@ -158,7 +168,7 @@ export async function getAccountFeedbackData(
   until?: string,
   excludeFilters?: string[],
 ): Promise<FeedbackData | null> {
-  const insFields = 'spend,reach,clicks,actions,cost_per_action_type,video_thruplay_watched_actions,date_start,date_stop';
+  const insFields = 'spend,reach,clicks,actions,cost_per_action_type,video_thruplay_watched_actions,results,date_start,date_stop';
   const timeRange = since && until
     ? `insights.time_range({"since":"${since}","until":"${until}"}){${insFields}}`
     : `insights.date_preset(last_7d){${insFields}}`;
@@ -260,6 +270,7 @@ export async function getAccountFeedbackData(
         spend,
         visitasPerfil,
         custoVisita: visitasPerfil > 0 ? spend / visitasPerfil : 0,
+        visitasPerfilMeta: profileVisitResult(ins?.results),
       });
     } else {
       campaigns.push({ tipo: 'outro', name: c.name, spend });

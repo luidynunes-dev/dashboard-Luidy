@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { RefreshCw, Wallet } from 'lucide-react';
 import { META_ACCOUNTS } from '../../config/metaAccounts';
-import { getAccountBalance, AccountBalance } from '../../services/metaService';
 import { mapWithConcurrency } from '../../services/kommoService';
 import { getAccountBalance, debugAccountFunding, AccountBalance } from '../../services/metaService';
 
