@@ -94,7 +94,10 @@ function excesso(kind: CampaignKind, storeKey: string, sum: KindSummary | undefi
 }
 
 function resultOf(kind: CampaignKind, c: CampaignFeedback): number {
-  return kind === 'perfil' ? (c.visitasPerfil ?? 0) : (c.mensagens ?? 0);
+  // Perfil: usa a visita ao perfil como o Gerenciador conta; se a campanha não for otimizada
+  // para isso (ex.: otimizada para clique no link), cai no cálculo antigo dos Feedbacks.
+  if (kind === 'perfil') return c.visitasPerfilMeta ?? c.visitasPerfil ?? 0;
+  return c.mensagens ?? 0;
 }
 
 // ─── Estado por loja ─────────────────────────────────────────────────────────
