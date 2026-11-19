@@ -43,6 +43,9 @@ export type ActiveView =
   | { type: 'store'; storeId: string };
 
 const SESSION_KEY = 'aure_access';
+// Login por senha do Luidy fica salvo no navegador por 30 dias; os demais seguem só até fechar a aba
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const isPersistentAccess = (s: AccessState) => s.isMaster === true && s.nome === 'Luidy';
 
 export default function App() {
   // Firebase Auth — para colegas que usam email/Google
@@ -74,17 +77,39 @@ export default function App() {
     root.classList.add(theme);
   }, [theme]);
 
-  // Restaura sessão de senha do sessionStorage
+  // Restaura sessão de senha.
+  // Acesso master do Luidy: salvo no navegador (localStorage) por SESSION_TTL_MS.
+  // Demais acessos: só na aba (sessionStorage), como antes.
   useEffect(() => {
+    const normalize = (s: any): AccessState => {
+      if (s.groupId !== undefined && s.groupIds === undefined) {
+        s.groupIds = s.groupId === 'all' ? 'all' : [s.groupId as string];
+        delete s.groupId;
+      }
+      return s as AccessState;
+    };
+
+    const persisted = localStorage.getItem(SESSION_KEY);
+    if (persisted) {
+      try {
+        const { state, expiresAt } = JSON.parse(persisted);
+        if (state && typeof expiresAt === 'number' && Date.now() <= expiresAt && isPersistentAccess(state)) {
+          setLocalAccess(normalize(state));
+          return;
+        }
+      } catch { /* sessão inválida */ }
+      localStorage.removeItem(SESSION_KEY);
+    }
+
     const saved = sessionStorage.getItem(SESSION_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        if (parsed.groupId !== undefined && parsed.groupIds === undefined) {
-          parsed.groupIds = parsed.groupId === 'all' ? 'all' : [parsed.groupId as string];
-          delete parsed.groupId;
+        const state = normalize(JSON.parse(saved));
+        setLocalAccess(state);
+        // Migra a sessão aberta do Luidy para o login de 30 dias
+        if (isPersistentAccess(state)) {
+          localStorage.setItem(SESSION_KEY, JSON.stringify({ state, expiresAt: Date.now() + SESSION_TTL_MS }));
         }
-        setLocalAccess(parsed as AccessState);
       } catch {
         sessionStorage.removeItem(SESSION_KEY);
       }
@@ -102,7 +127,11 @@ export default function App() {
   // Login por senha (AccessGate)
   const handlePasswordAccess = (state: AccessState) => {
     setLocalAccess(state);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+    if (isPersistentAccess(state)) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ state, expiresAt: Date.now() + SESSION_TTL_MS }));
+    } else {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+    }
   };
 
   // Login por Firebase (AuthView)
@@ -112,6 +141,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_KEY);
     if (firebaseAccess) await firebaseLogout();
     setLocalAccess(null);
