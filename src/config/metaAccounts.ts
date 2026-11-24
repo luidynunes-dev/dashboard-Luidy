@@ -51,4 +51,6 @@ export const META_ACCOUNTS: Record<string, string> = {
   're-calcados':         'act_2631504657194271',
   'santa-lolla':         'act_1119613145279413',
   'usaflex-cascavel':    'act_1104627724672805',
+  'luiza-barcelos-iguatemi': 'act_2558033274678128',
+  'luiza-barcelos-canoas':   'act_234408495205520',
 };

@@ -65,6 +65,8 @@ export const DISPLAY_NAMES: Record<string, string> = {
   're-calcados':         'Rê Calçados',
   'santa-lolla':         'Santa Lolla',
   'usaflex-cascavel':    'Usaflex Cascavel',
+  'luiza-barcelos-iguatemi': 'Luiza Barcelos Iguatemi Porto Alegre',
+  'luiza-barcelos-canoas':   'Luiza Barcelos Park Shopping Canoas',
 };
 
 // ─── Grupos de reunião (mesma divisão dos grupos de WhatsApp) ────────────────
@@ -92,6 +94,8 @@ export const WHATSAPP_GROUPS: WhatsappGroup[] = [
     storeKeys: ['piccadilly-amazonas','piccadilly-manauara','piccadilly-ponta-negra'] },
   { id: 'g-shoes-off', name: 'Shoes Off', storeKeys: ['shoes-off'] },
   { id: 'g-fetiche', name: 'Fetiche Love', storeKeys: ['fetiche-love-shop'] },
+  { id: 'g-luiza-iguatemi', name: 'Luiza Barcelos Iguatemi Porto Alegre', storeKeys: ['luiza-barcelos-iguatemi'] },
+  { id: 'g-luiza-canoas', name: 'Luiza Barcelos Park Shopping Canoas', storeKeys: ['luiza-barcelos-canoas'] },
   { id: 'g-re', name: 'Rê Calçados', storeKeys: ['re-calcados'] },
   { id: 'g-santa-lolla', name: 'Santa Lolla Santo Antão', storeKeys: ['santa-lolla'] },
   { id: 'g-swarovski', name: 'Swarovski Maringá | Curitiba', storeKeys: ['swarovski-maringa','swarovski-curitiba','swarovski-quiosque'] },
