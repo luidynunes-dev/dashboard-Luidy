@@ -48,6 +48,8 @@ const DISPLAY_NAMES: Record<string, string> = {
   're-calcados':         'Rê Calçados',
   'santa-lolla':         'Santa Lolla',
   'usaflex-cascavel':    'Usaflex Cascavel',
+  'luiza-barcelos-iguatemi': 'Luiza Barcelos Iguatemi Porto Alegre',
+  'luiza-barcelos-canoas':   'Luiza Barcelos Park Shopping Canoas',
 };
 
 // Operações que NÃO usam Kommo: não há conexão para monitorar, então ficam fora da verificação
