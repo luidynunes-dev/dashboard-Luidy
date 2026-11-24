@@ -14,10 +14,26 @@ interface KommoAccount {
   wonStatusId?: number; // status_id do estágio "Venda ganha" no funil (padrão Kommo: 142)
 }
 
+// Lojas cujo token fica numa variável de ambiente própria (mais simples de
+// cadastrar do que editar o JSON do KOMMO_ACCOUNTS). O subdomínio não é
+// sensível e fica no código; o token é lido só da variável na Vercel.
+const SEPARATE_TOKEN_STORES: Record<string, { subdomain: string; tokenEnv: string; wonStatusId?: number }> = {
+  'luiza-barcelos-iguatemi': { subdomain: 'luizabarcelosiguatemipoa', tokenEnv: 'KOMMO_TOKEN_LUIZA_IGUATEMI' },
+  'luiza-barcelos-canoas':   { subdomain: 'luizabarcelosparkcanoas',  tokenEnv: 'KOMMO_TOKEN_LUIZA_CANOAS' },
+};
+
 function loadAccounts(): Record<string, KommoAccount> {
   const raw = process.env.KOMMO_ACCOUNTS;
   if (!raw) throw new Error('KOMMO_ACCOUNTS não configurada no servidor.');
-  return JSON.parse(raw);
+  const accounts: Record<string, KommoAccount> = JSON.parse(raw);
+
+  for (const [storeId, cfg] of Object.entries(SEPARATE_TOKEN_STORES)) {
+    const token = process.env[cfg.tokenEnv];
+    if (token && !accounts[storeId]) {
+      accounts[storeId] = { subdomain: cfg.subdomain, token: token.trim(), wonStatusId: cfg.wonStatusId };
+    }
+  }
+  return accounts;
 }
 
 async function kommoFetch(subdomain: string, token: string, path: string) {
