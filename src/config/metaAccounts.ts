@@ -2,7 +2,7 @@
 
 export const META_ACCOUNTS: Record<string, string> = {
   // ── Grupo GESTA — Adidas (Nathália) ──────────────────────────────────────
-  'adidas-performance-porto-velho': 'act_446147604468271',
+  'adidas-performance-porto-velho': 'act_398711086125001',
   'adidas-performance-rio-branco':  'act_1851151385355695',
   'adidas-performance-grao-para':   'act_2493872294367812',
   'adidas-performance-belem':       'act_1093460335849644',
